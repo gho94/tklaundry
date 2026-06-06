@@ -1,0 +1,66 @@
+# ── 레거시 C# (비교용, 새 레포에 커밋하지 않음) ──
+/TKLaundry/
+
+# ── API 로그 ──
+logs/
+**/logs/
+
+# ── 비밀·로컬 설정 (커밋 금지) ──
+.env
+.env.*
+!.env.example
+**/application-local.yml
+**/application-local.yaml
+**/application-local.properties
+
+# ── Java / Gradle / Spring Boot ──
+.gradle/
+**/.gradle/
+**/build/
+!**/gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+*.class
+*.jar
+*.war
+*.ear
+hs_err_pid*
+replay_pid*
+
+# ── Flutter / Dart ──
+**/.dart_tool/
+**/.flutter-plugins-dependencies
+**/.pub-cache/
+**/.pub/
+**/coverage/
+**/.metadata
+app.*.symbols
+app.*.map.json
+
+# ── C# / Visual Studio (레거시 참조 시) ──
+**/bin/
+**/obj/
+**/.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ── IDE ──
+.idea/
+**/.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
