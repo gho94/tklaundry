@@ -43,7 +43,8 @@
 | GET | `/api/members` | 회원 목록 |
 | GET | `/api/members/{userId}` | 회원 상세 |
 | PUT | `/api/members/{userId}` | 회원 수정 |
-| GET | `/api/members/check-id?userId=` | 아이디 중복 확인 |
+| DELETE | `/api/members/{userId}` | 회원 삭제 |
+| GET | `/api/members/exists?userId=` | 아이디 중복 확인 |
 
 **로그인**
 
@@ -56,6 +57,60 @@
   "user": { "userId": "admin", "userName": "관리자" }
 }
 ```
+
+**회원가입** `POST /api/auth/register`
+
+```json
+// 요청
+{ "userId": "user01", "password": "...", "userName": "홍길동", "useYn": "Y" }
+
+// 성공 201
+{ "userId": "user01", "userName": "홍길동", "useYn": "Y" }
+
+// 중복 아이디 409
+{ "code": "CONFLICT", "message": "이미 사용중인 아이디입니다.", "traceId": "...", "details": {} }
+```
+
+- `password`는 응답에 **포함하지 않음**
+- **비로그인** 가입: 서버 `CommonInfo` 바인딩 + `LogInDate` 갱신 → 앱에서 즉시 로그인
+- **로그인 중** 관리자 등록: member만 반환, 기존 관리자 세션 유지
+
+**회원 목록** `GET /api/members`
+
+```json
+[
+  { "userId": "admin", "userName": "관리자", "useYn": "Y" }
+]
+```
+
+**회원 상세** `GET /api/members/{userId}` · **수정** `PUT /api/members/{userId}`
+
+```json
+// 상세 성공 (password 미포함)
+{ "userId": "admin", "userName": "관리자", "useYn": "Y" }
+
+// 수정 요청 (password 생략 시 기존 비밀번호 유지)
+{ "userName": "관리자", "useYn": "Y", "password": "새비번" }
+
+// 수정 성공 204 (body 없음)
+```
+
+**회원 삭제** `DELETE /api/members/{userId}`
+
+```json
+// 성공 204 (body 없음)
+
+// 본인 삭제 시도 409
+{ "code": "CONFLICT", "message": "로그인 중인 계정은 삭제할 수 없습니다.", "traceId": "...", "details": {} }
+```
+
+**아이디 중복 확인** `GET /api/members/exists?userId=`
+
+```json
+true
+```
+
+`true` = 이미 존재, `false` = 사용 가능
 
 > **1-2 공통코드** 구현 후 login 응답에 `codes` flat 배열 추가 예정:
 > `{ "user": { ... }, "codes": [ { "codeId", "pCodeId", "codeName" }, ... ] }`

@@ -5,6 +5,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
 import '../../../shared/widgets/tk_text_field.dart';
 import '../../../core/network/api_exception.dart';
+import '../../member/presentation/member_register_dialog.dart';
+import '../data/auth_local_storage.dart';
 import 'auth_provider.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -17,15 +19,26 @@ class LoginPage extends ConsumerStatefulWidget {
 class _LoginPageState extends ConsumerState<LoginPage> {
   final _userIdController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _passwordFocusNode = FocusNode();
 
   bool _isLoading = false;
+  bool _autoLogin = false;
   String? _errorMessage;
   String? _traceId;
+
+  @override
+  void initState() {
+    super.initState();
+    AuthLocalStorage().isAutoLoginEnabled().then((enabled) {
+      if (mounted) setState(() => _autoLogin = enabled);
+    });
+  }
 
   @override
   void dispose() {
     _userIdController.dispose();
     _passwordController.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -53,6 +66,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       await ref.read(authProvider.notifier).login(
             userId: userId,
             password: password,
+            autoLogin: _autoLogin,
           );
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -70,7 +84,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.neutral50,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
@@ -87,7 +101,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
                         ),
                   ),
                   const SizedBox(height: 8),
@@ -95,7 +108,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     '로그인',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: AppColors.neutral600,
                         ),
                   ),
                   const SizedBox(height: 32),
@@ -104,11 +117,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     label: '아이디',
                     hint: '아이디를 입력하세요',
                     autofocus: true,
-                    onSubmitted: (_) => _submit(),
+                    onSubmitted: (_) => _passwordFocusNode.requestFocus(),
                   ),
                   const SizedBox(height: 12),
                   TkTextField(
                     controller: _passwordController,
+                    focusNode: _passwordFocusNode,
                     label: '비밀번호',
                     hint: '비밀번호를 입력하세요',
                     obscureText: true,
@@ -124,12 +138,39 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                     ),
                   ],
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: Text(
+                      '자동 로그인',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    value: _autoLogin,
+                    onChanged: _isLoading
+                        ? null
+                        : (value) => setState(() => _autoLogin = value ?? false),
+                  ),
+                  const SizedBox(height: 16),
                   TkPrimaryButton(
                     label: '로그인',
                     icon: Icons.login,
                     isLoading: _isLoading,
                     onPressed: _isLoading ? null : _submit,
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () async {
+                            final registered = await MemberRegisterDialog.show(
+                              context,
+                              signInAfterRegister: true,
+                              autoLogin: _autoLogin,
+                            );
+                            if (!context.mounted || registered != true) return;
+                          },
+                    child: const Text('회원가입'),
                   ),
                   if (_traceId != null) ...[
                     const SizedBox(height: 12),
@@ -137,7 +178,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       'traceId: $_traceId',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
                             fontSize: 11,
                           ),
                     ),

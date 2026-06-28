@@ -1,27 +1,78 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/network/api_exception.dart';
+import '../../member/presentation/member_provider.dart';
 import '../data/auth_api.dart';
+import '../data/auth_local_storage.dart';
 import '../domain/auth_user.dart';
 
-class AuthNotifier extends Notifier<AuthUser?> {
+class AuthNotifier extends AsyncNotifier<AuthUser?> {
   late final AuthApi _authApi;
+  late final AuthLocalStorage _storage;
 
   @override
-  AuthUser? build() {
+  Future<AuthUser?> build() async {
     _authApi = AuthApi();
-    return null;
+    _storage = AuthLocalStorage();
+
+    final credentials = await _storage.readCredentials();
+    if (credentials == null) return null;
+
+    try {
+      return await _authApi.login(
+        userId: credentials.userId,
+        password: credentials.password,
+      );
+    } on ApiException {
+      await _storage.clear();
+      return null;
+    }
   }
 
   Future<void> login({
     required String userId,
     required String password,
+    required bool autoLogin,
   }) async {
-    state = await _authApi.login(userId: userId, password: password);
+    try {
+      final user = await _authApi.login(userId: userId, password: password);
+      if (autoLogin) {
+        await _storage.save(userId: userId, password: password);
+      } else {
+        await _storage.clear();
+      }
+      state = AsyncData(user);
+      ref.invalidate(memberListProvider);
+    } on ApiException {
+      state = const AsyncData(null);
+      rethrow;
+    }
   }
 
-  void logout() {
-    state = null;
+  Future<void> signInFromRegister({
+    required AuthUser user,
+    required String password,
+    required bool autoLogin,
+  }) {
+    return login(
+      userId: user.userId,
+      password: password,
+      autoLogin: autoLogin,
+    );
+  }
+
+  Future<void> logout() async {
+    try {
+      await _authApi.logout();
+    } on ApiException {
+      // 서버 세션 정리 실패해도 로컬 로그아웃은 진행
+    }
+
+    await _storage.clear();
+    state = const AsyncData(null);
+    ref.invalidate(memberListProvider);
   }
 }
 
-final authProvider = NotifierProvider<AuthNotifier, AuthUser?>(AuthNotifier.new);
+final authProvider =
+    AsyncNotifierProvider<AuthNotifier, AuthUser?>(AuthNotifier.new);

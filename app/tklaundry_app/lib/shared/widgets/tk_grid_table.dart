@@ -25,6 +25,8 @@ class TkGridTable extends StatelessWidget {
     this.emptyMessage = '데이터가 없습니다.',
     this.rowHeight = 44,
     this.headerHeight = 44,
+    this.onRowTap,
+    this.selectedRowIndex,
   });
 
   final List<TkGridColumn> columns;
@@ -32,6 +34,8 @@ class TkGridTable extends StatelessWidget {
   final String emptyMessage;
   final double rowHeight;
   final double headerHeight;
+  final void Function(int index)? onRowTap;
+  final int? selectedRowIndex;
 
   static const _borderSide = BorderSide(color: AppColors.border, width: 1);
 
@@ -67,16 +71,25 @@ class TkGridTable extends StatelessWidget {
               defaultVerticalAlignment: TableCellVerticalAlignment.middle,
               children: [
                 TableRow(
-                  decoration: const BoxDecoration(color: Color(0xFFF1F5F9)),
+                  decoration: const BoxDecoration(color: AppColors.neutral100),
                   children: [
                     for (final column in columns) _headerCell(column),
                   ],
                 ),
-                for (final row in rows)
+                for (var rowIndex = 0; rowIndex < rows.length; rowIndex++)
                   TableRow(
+                    decoration: selectedRowIndex == rowIndex
+                        ? BoxDecoration(color: AppColors.primary.withValues(alpha: 0.08))
+                        : null,
                     children: [
                       for (var i = 0; i < columns.length; i++)
-                        _dataCell(row[i], columns[i]),
+                        _dataCell(
+                          rows[rowIndex][i],
+                          columns[i],
+                          onTap: onRowTap == null
+                              ? null
+                              : () => onRowTap!(rowIndex),
+                        ),
                     ],
                   ),
               ],
@@ -123,10 +136,10 @@ class TkGridTable extends StatelessWidget {
     );
   }
 
-  Widget _dataCell(Widget child, TkGridColumn column) {
+  Widget _dataCell(Widget child, TkGridColumn column, {VoidCallback? onTap}) {
     final isInteractive = child is TkGridComboBox || child is TkComboBox;
 
-    return SizedBox(
+    final cell = SizedBox(
       height: rowHeight,
       child: Padding(
         padding: EdgeInsets.symmetric(
@@ -138,6 +151,14 @@ class TkGridTable extends StatelessWidget {
           child: child,
         ),
       ),
+    );
+
+    if (onTap == null) return cell;
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: cell,
     );
   }
 

@@ -13,10 +13,69 @@
         AND UseYn  = 'Y'
     </select>
 
-    <update id="updateTblComMember">
+    <update id="updateComMemberLoginDate">
         UPDATE ComMember
         SET LogInDate = GETDATE()
         WHERE UserID = #{userId}
     </update>
+
+    <select id="selectComMemberList" resultType="com.tklaundry.api.common.model.ComMember">
+        SELECT
+            UserID   AS userId,
+            UserName AS userName,
+            UseYn    AS useYn
+        FROM ComMember
+        ORDER BY UserID
+    </select>
+
+    <select id="countComMemberByUserId" resultType="int">
+        SELECT COUNT(1)
+        FROM ComMember
+        WHERE UserID = #{userId}
+    </select>
+
+    <select id="selectComMemberByUserId" resultType="com.tklaundry.api.common.model.ComMember">
+        SELECT
+            UserID   AS userId,
+            UserName AS userName,
+            UseYn    AS useYn
+        FROM ComMember
+        WHERE UserID = #{userId}
+    </select>
+
+    <insert id="insertComMember">
+        INSERT INTO ComMember (
+            UserID,
+            UserPW,
+            UserName,
+            UseYn,
+            InsertUserID,
+            InsertDate
+        ) VALUES (
+            #{userId},
+            #{password},
+            #{userName},
+            #{useYn},
+            #{insertUserId},
+            GETDATE()
+        )
+    </insert>
+
+    <update id="updateComMember">
+        UPDATE ComMember
+        SET UserName = #{userName},
+            UseYn = #{useYn},
+            UpdateUserID = #{updateUserId},
+            UpdateDate = GETDATE()
+        <if test="password != null and password != ''">
+            , UserPW = #{password}
+        </if>
+        WHERE UserID = #{userId}
+    </update>
+
+    <delete id="deleteComMember">
+        DELETE FROM ComMember
+        WHERE UserID = #{userId}
+    </delete>
 
 </mapper>
