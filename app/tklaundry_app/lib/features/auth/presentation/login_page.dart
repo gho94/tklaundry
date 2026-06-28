@@ -5,6 +5,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
 import '../../../shared/widgets/tk_text_field.dart';
 import '../../../core/network/api_exception.dart';
+import '../../member/presentation/member_register_dialog.dart';
+import '../data/auth_local_storage.dart';
 import 'auth_provider.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -20,8 +22,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _passwordFocusNode = FocusNode();
 
   bool _isLoading = false;
+  bool _autoLogin = false;
   String? _errorMessage;
   String? _traceId;
+
+  @override
+  void initState() {
+    super.initState();
+    AuthLocalStorage().isAutoLoginEnabled().then((enabled) {
+      if (mounted) setState(() => _autoLogin = enabled);
+    });
+  }
 
   @override
   void dispose() {
@@ -55,6 +66,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       await ref.read(authProvider.notifier).login(
             userId: userId,
             password: password,
+            autoLogin: _autoLogin,
           );
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -126,12 +138,39 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                     ),
                   ],
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: Text(
+                      '자동 로그인',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    value: _autoLogin,
+                    onChanged: _isLoading
+                        ? null
+                        : (value) => setState(() => _autoLogin = value ?? false),
+                  ),
+                  const SizedBox(height: 16),
                   TkPrimaryButton(
                     label: '로그인',
                     icon: Icons.login,
                     isLoading: _isLoading,
                     onPressed: _isLoading ? null : _submit,
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () async {
+                            final registered = await MemberRegisterDialog.show(
+                              context,
+                              signInAfterRegister: true,
+                              autoLogin: _autoLogin,
+                            );
+                            if (!context.mounted || registered != true) return;
+                          },
+                    child: const Text('회원가입'),
                   ),
                   if (_traceId != null) ...[
                     const SizedBox(height: 12),

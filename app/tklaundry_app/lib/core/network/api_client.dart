@@ -52,6 +52,33 @@ class ApiClient {
     throw _parseError(response, requestId, fallbackMessage);
   }
 
+  Future<bool> getBool(
+    String path, {
+    Map<String, String>? queryParameters,
+    String fallbackMessage = '요청에 실패했습니다.',
+  }) async {
+    final requestId = _newRequestId();
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.apiPrefix}$path',
+    ).replace(queryParameters: queryParameters);
+
+    http.Response response;
+    try {
+      response = await _send('GET', uri, requestId, null);
+    } catch (_) {
+      throw ApiException(
+        message: '서버에 연결할 수 없습니다. API가 실행 중인지 확인해 주세요.',
+        traceId: requestId,
+      );
+    }
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return jsonDecode(response.body) as bool;
+    }
+
+    throw _parseError(response, requestId, fallbackMessage);
+  }
+
   Future<Map<String, dynamic>> post(
     String path, {
     Object? body,

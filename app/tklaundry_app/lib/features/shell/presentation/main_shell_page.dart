@@ -103,7 +103,7 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
 
   @override
   Widget build(BuildContext context) {
-    final user = ref.watch(authProvider);
+    final user = ref.watch(authProvider).valueOrNull;
 
     return Scaffold(
       body: Row(

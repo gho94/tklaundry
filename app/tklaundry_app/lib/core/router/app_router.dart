@@ -23,7 +23,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: RouteConstants.login,
     refreshListenable: refresh,
     redirect: (context, state) {
-      final loggedIn = ref.read(authProvider) != null;
+      final auth = ref.read(authProvider);
+      if (auth.isLoading) return null;
+
+      final loggedIn = auth.valueOrNull != null;
       final loggingIn = state.matchedLocation == RouteConstants.login;
 
       if (!loggedIn && !loggingIn) return RouteConstants.login;

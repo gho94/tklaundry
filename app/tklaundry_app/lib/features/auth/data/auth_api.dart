@@ -27,4 +27,34 @@ class AuthApi {
       userName: user['userName'] as String,
     );
   }
+
+  Future<AuthUser> register({
+    required String userId,
+    required String password,
+    required String userName,
+    required String useYn,
+  }) async {
+    final body = await _client.post(
+      '/auth/register',
+      body: {
+        'userId': userId.trim(),
+        'password': password,
+        'userName': userName.trim(),
+        'useYn': useYn,
+      },
+      fallbackMessage: '회원가입에 실패했습니다.',
+    );
+
+    return AuthUser(
+      userId: body['userId'] as String,
+      userName: body['userName'] as String,
+    );
+  }
+
+  Future<void> logout() async {
+    await _client.post(
+      '/auth/logout',
+      fallbackMessage: '로그아웃에 실패했습니다.',
+    );
+  }
 }

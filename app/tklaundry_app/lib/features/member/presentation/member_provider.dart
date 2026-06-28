@@ -9,10 +9,10 @@ class MemberListNotifier extends AsyncNotifier<List<Member>> {
   @override
   Future<List<Member>> build() async {
     _memberApi = MemberApi();
-    return _memberApi.listMembers();
+    return [];
   }
 
-  Future<void> refresh() async {
+  Future<void> search() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(_memberApi.listMembers);
   }
