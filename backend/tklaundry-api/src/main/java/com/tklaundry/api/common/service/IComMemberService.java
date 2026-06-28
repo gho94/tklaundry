@@ -9,6 +9,18 @@ public interface IComMemberService {
 
 	CommonInfo login(String userId, String password);
 
+	void logout();
+
 	List<ComMember> listMembers();
+
+	boolean existsUserId(String userId);
+
+	ComMember register(ComMember request);
+
+	ComMember getMember(String userId);
+
+	void updateMember(String userId, ComMember request);
+
+	void removeMember(String userId);
 
 }
