@@ -1,5 +1,5 @@
 name: tklaundry_app
-description: "A new Flutter project."
+description: TKLaundry 차세대 Windows 앱
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -9,6 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_riverpod: ^2.6.1
+  go_router: ^15.1.2
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:

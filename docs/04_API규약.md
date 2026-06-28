@@ -51,16 +51,15 @@
 // 요청
 { "userId": "admin", "password": "..." }
 
-// 성공 200
+// 성공 200 (현재 — ① 회원만)
 {
-  "user": { "userId": "admin", "userName": "관리자" },
-  "codes": [
-    { "codeId": "B20001", "pCodeId": "B10001", "codeName": "일반" }
-  ]
+  "user": { "userId": "admin", "userName": "관리자" }
 }
 ```
 
-- `codes`: flat 배열. 앱에서 `Map<codeId, …>` + `Map<pCodeId, List<…>>` 변환
+> **1-2 공통코드** 구현 후 login 응답에 `codes` flat 배열 추가 예정:
+> `{ "user": { ... }, "codes": [ { "codeId", "pCodeId", "codeName" }, ... ] }`
+> 앱에서 `Map<codeId, …>` + `Map<pCodeId, List<…>>` 변환
 
 ### 공통코드
 
@@ -71,6 +70,8 @@
 | POST | `/api/codes` | 등록 |
 | PUT | `/api/codes/{codeId}` | 수정 |
 | DELETE | `/api/codes/{codeId}` | 삭제 |
+
+- `codes`: flat 배열 (login 응답 또는 `GET /api/codes`로 앱 캐시 갱신)
 
 ### 고객
 
