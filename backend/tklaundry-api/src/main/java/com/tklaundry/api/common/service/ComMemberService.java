@@ -1,5 +1,7 @@
 package com.tklaundry.api.common.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.tklaundry.api.common.CommonInfo;
@@ -25,15 +27,20 @@ public class ComMemberService implements IComMemberService {
 			throw new ApiException(ApiErrorCode.VALIDATION_ERROR, "아이디와 비밀번호를 입력해 주세요.");
 		}
 
-		ComMember tblComMember = comMemberMapper.getTblComMember(userId.trim(), password);
-		if (tblComMember == null) {
+		ComMember member = comMemberMapper.getTblComMember(userId.trim(), password);
+		if (member == null) {
 			throw new ApiException(ApiErrorCode.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다.");
 		}
 
-		comMemberMapper.updateTblComMember(tblComMember.getUserId());
-		commonInfo.bindLogin(tblComMember);
+		comMemberMapper.updateTblComMember(member.getUserId());
+		commonInfo.bindLogin(member);
 
 		return commonInfo;
+	}
+
+	@Override
+	public List<ComMember> listMembers() {
+		return comMemberMapper.selectComMemberList();
 	}
 
 }

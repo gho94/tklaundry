@@ -19,4 +19,13 @@
         WHERE UserID = #{userId}
     </update>
 
+    <select id="selectComMemberList" resultType="com.tklaundry.api.common.model.ComMember">
+        SELECT
+            UserID   AS userId,
+            UserName AS userName,
+            UseYn    AS useYn
+        FROM ComMember
+        ORDER BY UserID
+    </select>
+
 </mapper>
