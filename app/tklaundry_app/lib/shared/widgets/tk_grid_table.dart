@@ -67,7 +67,7 @@ class TkGridTable extends StatelessWidget {
               defaultVerticalAlignment: TableCellVerticalAlignment.middle,
               children: [
                 TableRow(
-                  decoration: const BoxDecoration(color: Color(0xFFF1F5F9)),
+                  decoration: const BoxDecoration(color: AppColors.neutral100),
                   children: [
                     for (final column in columns) _headerCell(column),
                   ],

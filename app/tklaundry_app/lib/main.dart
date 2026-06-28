@@ -17,7 +17,7 @@ class MainApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: '태강세탁소',
-      theme: AppTheme.light,
+      theme: AppTheme.light(),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

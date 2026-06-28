@@ -72,7 +72,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.neutral50,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
@@ -89,7 +89,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
                         ),
                   ),
                   const SizedBox(height: 8),
@@ -97,7 +96,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     '로그인',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: AppColors.neutral600,
                         ),
                   ),
                   const SizedBox(height: 32),
@@ -140,7 +139,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       'traceId: $_traceId',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
                             fontSize: 11,
                           ),
                     ),
