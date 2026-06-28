@@ -17,6 +17,7 @@ class LoginPage extends ConsumerStatefulWidget {
 class _LoginPageState extends ConsumerState<LoginPage> {
   final _userIdController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _passwordFocusNode = FocusNode();
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -26,6 +27,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   void dispose() {
     _userIdController.dispose();
     _passwordController.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -104,11 +106,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     label: '아이디',
                     hint: '아이디를 입력하세요',
                     autofocus: true,
-                    onSubmitted: (_) => _submit(),
+                    onSubmitted: (_) => _passwordFocusNode.requestFocus(),
                   ),
                   const SizedBox(height: 12),
                   TkTextField(
                     controller: _passwordController,
+                    focusNode: _passwordFocusNode,
                     label: '비밀번호',
                     hint: '비밀번호를 입력하세요',
                     obscureText: true,

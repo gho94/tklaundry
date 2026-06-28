@@ -14,6 +14,7 @@ class TkTextField extends StatelessWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.autofocus = false,
+    this.focusNode,
   });
 
   final TextEditingController? controller;
@@ -27,11 +28,13 @@ class TkTextField extends StatelessWidget {
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final bool autofocus;
+  final FocusNode? focusNode;
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
+      focusNode: focusNode,
       obscureText: obscureText,
       readOnly: readOnly,
       autofocus: autofocus,

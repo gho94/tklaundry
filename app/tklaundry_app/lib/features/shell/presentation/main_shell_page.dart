@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
 import '../../auth/presentation/auth_provider.dart';
+import '../../member/presentation/member_list_page.dart';
 
 enum _ShellMenu {
   home('home', '홈', Icons.home_outlined),
@@ -201,6 +202,14 @@ class _ShellContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (menu == _ShellMenu.member) {
+      return Container(
+        color: AppColors.surface,
+        padding: const EdgeInsets.all(24),
+        child: const MemberListPage(),
+      );
+    }
+
     return Container(
       color: AppColors.surface,
       padding: const EdgeInsets.all(24),
