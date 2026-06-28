@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
 import '../../../shared/widgets/tk_text_field.dart';
+import '../../../core/network/api_exception.dart';
 import 'auth_provider.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -17,6 +18,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _userIdController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  bool _isLoading = false;
+  String? _errorMessage;
+  String? _traceId;
+
   @override
   void dispose() {
     _userIdController.dispose();
@@ -24,11 +29,42 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     FocusScope.of(context).unfocus();
-    ref.read(authProvider.notifier).login(
-          userId: _userIdController.text,
-        );
+
+    final userId = _userIdController.text.trim();
+    final password = _passwordController.text;
+
+    if (userId.isEmpty || password.isEmpty) {
+      setState(() {
+        _errorMessage = '아이디와 비밀번호를 입력해 주세요.';
+        _traceId = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+      _traceId = null;
+    });
+
+    try {
+      await ref.read(authProvider.notifier).login(
+            userId: userId,
+            password: password,
+          );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.message;
+        _traceId = e.traceId;
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -74,25 +110,38 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   TkTextField(
                     controller: _passwordController,
                     label: '비밀번호',
-                    hint: '비밀번호 (임시 · 검증 없음)',
+                    hint: '비밀번호를 입력하세요',
                     obscureText: true,
                     onSubmitted: (_) => _submit(),
                   ),
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      _errorMessage!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.error,
+                            height: 1.4,
+                          ),
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   TkPrimaryButton(
                     label: '로그인',
                     icon: Icons.login,
-                    onPressed: _submit,
+                    isLoading: _isLoading,
+                    onPressed: _isLoading ? null : _submit,
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'API 연동 전입니다. 아이디 없이 로그인 버튼만 눌러도 이동합니다.',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
-                          height: 1.4,
-                        ),
-                  ),
+                  if (_traceId != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      'traceId: $_traceId',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                          ),
+                    ),
+                  ],
                 ],
               ),
             ),

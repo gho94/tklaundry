@@ -1,15 +1,22 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/auth_api.dart';
 import '../domain/auth_user.dart';
 
 class AuthNotifier extends Notifier<AuthUser?> {
-  @override
-  AuthUser? build() => null;
+  late final AuthApi _authApi;
 
-  /// API 연동 전 임시 로그인. 아이디만 비어 있지 않으면 통과.
-  void login({required String userId}) {
-    final id = userId.trim().isEmpty ? 'demo' : userId.trim();
-    state = AuthUser(userId: id, userName: id);
+  @override
+  AuthUser? build() {
+    _authApi = AuthApi();
+    return null;
+  }
+
+  Future<void> login({
+    required String userId,
+    required String password,
+  }) async {
+    state = await _authApi.login(userId: userId, password: password);
   }
 
   void logout() {
