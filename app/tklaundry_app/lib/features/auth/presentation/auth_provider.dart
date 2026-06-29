@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_exception.dart';
-import '../../member/presentation/member_provider.dart';
 import '../data/auth_api.dart';
 import '../data/auth_local_storage.dart';
 import '../domain/auth_user.dart';
@@ -42,7 +41,6 @@ class AuthNotifier extends AsyncNotifier<AuthUser?> {
         await _storage.clear();
       }
       state = AsyncData(user);
-      ref.invalidate(memberListProvider);
     } on ApiException {
       state = const AsyncData(null);
       rethrow;
@@ -70,7 +68,6 @@ class AuthNotifier extends AsyncNotifier<AuthUser?> {
 
     await _storage.clear();
     state = const AsyncData(null);
-    ref.invalidate(memberListProvider);
   }
 }
 

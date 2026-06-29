@@ -28,16 +28,6 @@ class _MemberListPageState extends ConsumerState<MemberListPage> {
   bool _isDeleting = false;
   final _memberApi = MemberApi();
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(memberListProvider.notifier).search();
-      }
-    });
-  }
-
   Future<void> _openRegisterDialog() async {
     final registered = await MemberRegisterDialog.showCreate(context);
     if (registered != true || !mounted) return;
