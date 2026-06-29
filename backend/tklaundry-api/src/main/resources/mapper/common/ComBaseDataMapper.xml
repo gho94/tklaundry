@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tklaundry.api.common.mapper.ComBaseDataMapper">
+
+    <select id="selectComBaseDataList" resultType="com.tklaundry.api.common.model.ComBaseData">
+        SELECT
+            CodeID   AS codeId,
+            PCodeID  AS pCodeId,
+            CodeName AS codeName
+        FROM ComBaseData
+        ORDER BY PCodeID, CodeID
+    </select>
+
+</mapper>
