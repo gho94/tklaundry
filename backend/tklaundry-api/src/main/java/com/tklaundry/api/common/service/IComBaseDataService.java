@@ -8,4 +8,6 @@ public interface IComBaseDataService {
 
 	List<ComBaseData> listCodes();
 
+	ComBaseData getCode(String codeId);
+
 }

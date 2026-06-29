@@ -12,4 +12,13 @@
         ORDER BY PCodeID, CodeID
     </select>
 
+    <select id="selectComBaseDataByCodeId" resultType="com.tklaundry.api.common.model.ComBaseData">
+        SELECT
+            CodeID   AS codeId,
+            PCodeID  AS pCodeId,
+            CodeName AS codeName
+        FROM ComBaseData
+        WHERE CodeID = #{codeId}
+    </select>
+
 </mapper>

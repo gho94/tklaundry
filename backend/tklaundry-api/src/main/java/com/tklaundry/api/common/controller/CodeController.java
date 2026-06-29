@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,6 +23,11 @@ public class CodeController {
 	@GetMapping
 	public ResponseEntity<List<ComBaseData>> listCodes() {
 		return ResponseEntity.ok(comBaseDataService.listCodes());
+	}
+
+	@GetMapping("/{codeId}")
+	public ResponseEntity<ComBaseData> getCode(@PathVariable String codeId) {
+		return ResponseEntity.ok(comBaseDataService.getCode(codeId));
 	}
 
 }
