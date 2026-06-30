@@ -259,10 +259,78 @@ true
 
 | Method | 경로 | 설명 |
 |--------|------|------|
-| GET | `/api/products` | 목록·검색 |
-| GET | `/api/products/{productCode}` | 상세 |
+| GET | `/api/products?processCode=&groupCode=` | 목록·공정·그룹 필터 |
 | POST | `/api/products` | 등록 |
 | PUT | `/api/products/{productCode}` | 수정 |
+| DELETE | `/api/products/{productCode}` | 삭제 |
+
+- 단건 조회 API 없음 — 앱은 목록 그리드 행으로 수정 다이얼로그 채움 (레거시 `FrmProduct`와 동일, 표시·편집은 제품명·단가)
+- 수정·삭제는 사전 `NOT_FOUND` 조회 없음
+- 목록 필터: 공정·그룹 **둘 다 필수** (레거시 상단 콤보와 동일, 「전체」 없음)
+- 수정 시 `ProcessCode`·`GroupCode`는 변경하지 않음 (레거시 화면과 동일)
+
+**제품 목록** `GET /api/products?processCode=B20003&groupCode=B30001`
+
+```json
+[
+  {
+    "productCode": "P0001",
+    "processCode": "B20003",
+    "groupCode": "B30001",
+    "productName": "와이셔츠",
+    "price": 3000
+  }
+]
+```
+
+- `processCode`, `groupCode` 쿼리 **필수**
+- `WHERE ProcessCode = ? AND GroupCode = ?`
+- 정렬: `ORDER BY ProductCode`
+
+**제품 등록** `POST /api/products`
+
+```json
+// 요청 (productCode는 보내지 않음 — 서버 채번)
+{
+  "processCode": "B20003",
+  "groupCode": "B30001",
+  "productName": "와이셔츠",
+  "price": 3000
+}
+
+// 성공 201
+{
+  "productCode": "P0461",
+  "processCode": "B20003",
+  "groupCode": "B30001",
+  "productName": "와이셔츠",
+  "price": 3000
+}
+```
+
+- `productCode`: 서버 채번 (`P` + 4자리, `TOP 1 ORDER BY ProductCode DESC` + 1)
+- `price` null → `0`, 미입력 문자열 → `""`
+- 위치·이름 중복 검사 없음 (레거시와 동일)
+
+**제품 수정** `PUT /api/products/{productCode}`
+
+```json
+// 요청 (productCode는 path만 사용 · 공정·그룹 코드 미포함)
+{
+  "productName": "와이셔츠(수정)",
+  "price": 3500
+}
+
+// 성공 204 (body 없음)
+```
+
+- DB 갱신: `ProductName`, `Price`, 감사필드만 (`ProcessCode`·`GroupCode` 유지)
+
+**제품 삭제** `DELETE /api/products/{productCode}`
+
+```json
+// 성공 204 (body 없음)
+```
 
 ---
 
