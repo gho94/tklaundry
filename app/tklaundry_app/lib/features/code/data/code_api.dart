@@ -41,4 +41,22 @@ class CodeApi {
 
     return Code.fromJson(body);
   }
+
+  Future<void> updateCode({
+    required String codeId,
+    required String codeName,
+  }) async {
+    await _client.put(
+      '/codes/${Uri.encodeComponent(codeId)}',
+      body: {'codeName': codeName},
+      fallbackMessage: '코드 수정에 실패했습니다.',
+    );
+  }
+
+  Future<void> deleteCode(String codeId) async {
+    await _client.delete(
+      '/codes/${Uri.encodeComponent(codeId)}',
+      fallbackMessage: '코드 삭제에 실패했습니다.',
+    );
+  }
 }

@@ -14,10 +14,16 @@ public interface ComBaseDataMapper {
 
 	ComBaseData selectComBaseDataByCodeId(@Param("codeId") String codeId);
 
+	List<ComBaseData> selectComBaseDataListByPCodeId(@Param("pCodeId") String pCodeId);
+
 	String selectLastCodeId();
 
 	String selectLastCodeIdByHeader(@Param("header") String header);
 
 	void insertComBaseData(ComBaseData code);
+
+	void updateComBaseData(ComBaseData code);
+
+	void deleteComBaseData(@Param("codeId") String codeId);
 
 }

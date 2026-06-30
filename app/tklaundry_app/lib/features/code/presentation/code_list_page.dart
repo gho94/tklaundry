@@ -5,9 +5,11 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
+import '../data/code_api.dart';
 import '../domain/code.dart';
 import '../domain/code_tree.dart';
 import 'code_detail_panel.dart';
+import 'code_edit_dialog.dart';
 import 'code_provider.dart';
 import 'code_register_dialog.dart';
 import 'code_tree_panel.dart';
@@ -23,6 +25,8 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
   final Set<String> _expandedCodeIds = {};
   String? _selectedCodeId;
   bool _defaultExpansionApplied = false;
+  bool _isDeleting = false;
+  final _codeApi = CodeApi();
 
   @override
   void initState() {
@@ -123,6 +127,66 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
     await _onRegistered(created, expandParentCodeId: parent.codeId);
   }
 
+  Future<void> _editSelected(Code code) async {
+    final updated = await CodeEditDialog.show(context, code.codeId);
+    if (updated != true || !mounted) return;
+
+    await ref.read(codeProvider.notifier).search();
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('코드가 수정되었습니다.')),
+    );
+  }
+
+  Future<void> _deleteSelected(Code code) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('코드 삭제'),
+        content: Text(
+          '\'${code.codeName}\' (${code.codeId}) 코드와\n하위 코드를 모두 삭제하시겠습니까?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isDeleting = true);
+
+    try {
+      await _codeApi.deleteCode(code.codeId);
+      if (!mounted) return;
+
+      await ref.read(codeProvider.notifier).search();
+      if (!mounted) return;
+
+      setState(() => _selectedCodeId = null);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('코드가 삭제되었습니다.')),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final codesAsync = ref.watch(codeProvider);
@@ -143,7 +207,7 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
               label: '최상위 추가',
               variant: TkButtonVariant.outline,
               icon: Icons.add,
-              onPressed: codesAsync.isLoading ? null : _addTopLevel,
+              onPressed: codesAsync.isLoading || _isDeleting ? null : _addTopLevel,
             ),
             const SizedBox(width: AppSpacing.s2),
             TkPrimaryButton(
@@ -151,7 +215,7 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
               variant: TkButtonVariant.outline,
               icon: Icons.search,
               isLoading: codesAsync.isLoading,
-              onPressed: codesAsync.isLoading
+              onPressed: codesAsync.isLoading || _isDeleting
                   ? null
                   : () => ref.read(codeProvider.notifier).search(),
             ),
@@ -190,7 +254,14 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
                     child: CodeDetailPanel(
                       selectedCode: selectedCode,
                       codes: codes,
-                      onAddChild: selectedCode == null
+                      isDeleting: _isDeleting,
+                      onEdit: selectedCode == null || _isDeleting
+                          ? null
+                          : () => _editSelected(selectedCode),
+                      onDelete: selectedCode == null || _isDeleting
+                          ? null
+                          : () => _deleteSelected(selectedCode),
+                      onAddChild: selectedCode == null || _isDeleting
                           ? null
                           : () => _addChild(selectedCode),
                     ),

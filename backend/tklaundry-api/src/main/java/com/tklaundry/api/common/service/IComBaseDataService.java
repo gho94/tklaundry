@@ -12,4 +12,8 @@ public interface IComBaseDataService {
 
 	ComBaseData registerCode(ComBaseData request);
 
+	void updateCode(String codeId, ComBaseData request);
+
+	void deleteCode(String codeId);
+
 }

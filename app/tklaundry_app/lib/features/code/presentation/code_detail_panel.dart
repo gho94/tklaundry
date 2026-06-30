@@ -12,11 +12,17 @@ class CodeDetailPanel extends StatelessWidget {
     required this.selectedCode,
     required this.codes,
     this.onAddChild,
+    this.onEdit,
+    this.onDelete,
+    this.isDeleting = false,
   });
 
   final Code? selectedCode;
   final List<Code> codes;
   final VoidCallback? onAddChild;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+  final bool isDeleting;
 
   @override
   Widget build(BuildContext context) {
@@ -77,14 +83,50 @@ class CodeDetailPanel extends StatelessWidget {
                     ),
                   ),
           ),
-          if (selectedCode != null && onAddChild != null) ...[
+          if (selectedCode != null &&
+              (onEdit != null || onDelete != null || onAddChild != null)) ...[
             const Divider(height: 1, color: AppColors.neutral200),
             Padding(
               padding: const EdgeInsets.all(AppSpacing.s4),
-              child: TkPrimaryButton(
-                label: '하위 추가',
-                icon: Icons.add,
-                onPressed: onAddChild,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (onEdit != null || onDelete != null)
+                    Row(
+                      children: [
+                        if (onEdit != null)
+                          Expanded(
+                            child: TkPrimaryButton(
+                              label: '수정',
+                              variant: TkButtonVariant.outline,
+                              icon: Icons.edit_outlined,
+                              onPressed: isDeleting ? null : onEdit,
+                            ),
+                          ),
+                        if (onEdit != null && onDelete != null)
+                          const SizedBox(width: AppSpacing.s2),
+                        if (onDelete != null)
+                          Expanded(
+                            child: TkPrimaryButton(
+                              label: '삭제',
+                              variant: TkButtonVariant.outline,
+                              icon: Icons.delete_outline,
+                              isLoading: isDeleting,
+                              onPressed: isDeleting ? null : onDelete,
+                            ),
+                          ),
+                      ],
+                    ),
+                  if (onAddChild != null) ...[
+                    if (onEdit != null || onDelete != null)
+                      const SizedBox(height: AppSpacing.s2),
+                    TkPrimaryButton(
+                      label: '하위 추가',
+                      icon: Icons.add,
+                      onPressed: isDeleting ? null : onAddChild,
+                    ),
+                  ],
+                ],
               ),
             ),
           ],

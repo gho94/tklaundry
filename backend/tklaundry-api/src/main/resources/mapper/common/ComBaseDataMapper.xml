@@ -21,6 +21,16 @@
         WHERE CodeID = #{codeId}
     </select>
 
+    <select id="selectComBaseDataListByPCodeId" resultType="com.tklaundry.api.common.model.ComBaseData">
+        SELECT
+            CodeID   AS codeId,
+            PCodeID  AS pCodeId,
+            CodeName AS codeName
+        FROM ComBaseData
+        WHERE PCodeID = #{pCodeId}
+        ORDER BY CodeID
+    </select>
+
     <select id="selectLastCodeId" resultType="string">
         SELECT TOP 1 CodeID
         FROM ComBaseData
@@ -49,5 +59,18 @@
             GETDATE()
         )
     </insert>
+
+    <update id="updateComBaseData">
+        UPDATE ComBaseData
+        SET CodeName = #{codeName},
+            UpdateUserID = #{updateUserId},
+            UpdateDate = GETDATE()
+        WHERE CodeID = #{codeId}
+    </update>
+
+    <delete id="deleteComBaseData">
+        DELETE FROM ComBaseData
+        WHERE CodeID = #{codeId}
+    </delete>
 
 </mapper>

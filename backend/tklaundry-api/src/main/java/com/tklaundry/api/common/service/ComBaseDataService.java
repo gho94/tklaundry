@@ -70,4 +70,27 @@ public class ComBaseDataService implements IComBaseDataService {
 		return header + "%04d".formatted(nextSeq);
 	}
 
+	@Override
+	public void updateCode(String codeId, ComBaseData request) {
+		ComBaseData code = ComBaseData.builder()
+				.codeId(codeId)
+				.codeName(request.getCodeName())
+				.updateUserId(commonInfo.getUser().getUserId())
+				.build();
+
+		comBaseDataMapper.updateComBaseData(code);
+	}
+
+	@Override
+	public void deleteCode(String codeId) {
+		deleteCodeRecursive(codeId);
+	}
+
+	private void deleteCodeRecursive(String codeId) {
+		for (ComBaseData child : comBaseDataMapper.selectComBaseDataListByPCodeId(codeId)) {
+			deleteCodeRecursive(child.getCodeId());
+		}
+		comBaseDataMapper.deleteComBaseData(codeId);
+	}
+
 }
