@@ -280,6 +280,26 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
                         selectedRowIndex: _selectedRowIndex,
                         onRowTap: (index) =>
                             setState(() => _selectedRowIndex = index),
+                        onRowDoubleTap: (index) async {
+                          final product = products[index];
+                          final updated = await ProductRegisterDialog.showEdit(
+                            context,
+                            product,
+                            processName: _lookupCodeName(
+                              codes,
+                              product.processCode,
+                            ),
+                            groupName: _lookupCodeName(
+                              codes,
+                              product.groupCode,
+                            ),
+                          );
+                          if (!mounted || updated != true) return;
+                          await _search(
+                            processCode: effectiveProcessCode!,
+                            groupCode: effectiveGroupCode!,
+                          );
+                        },
                       );
                     },
                   );

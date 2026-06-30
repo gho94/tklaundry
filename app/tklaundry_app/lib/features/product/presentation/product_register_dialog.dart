@@ -5,20 +5,25 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
 import '../../../shared/widgets/tk_text_field.dart';
 import '../data/product_api.dart';
+import '../domain/product.dart';
 
 class ProductRegisterDialog extends StatefulWidget {
   const ProductRegisterDialog({
     super.key,
+    this.product,
     required this.processCode,
     required this.groupCode,
     required this.processName,
     required this.groupName,
   });
 
+  final Product? product;
   final String processCode;
   final String groupCode;
   final String processName;
   final String groupName;
+
+  bool get _isEdit => product != null;
 
   static Future<bool?> showCreate(
     BuildContext context, {
@@ -38,6 +43,24 @@ class ProductRegisterDialog extends StatefulWidget {
     );
   }
 
+  static Future<bool?> showEdit(
+    BuildContext context,
+    Product product, {
+    required String processName,
+    required String groupName,
+  }) {
+    return showDialog<bool>(
+      context: context,
+      builder: (_) => ProductRegisterDialog(
+        product: product,
+        processCode: product.processCode,
+        groupCode: product.groupCode,
+        processName: processName,
+        groupName: groupName,
+      ),
+    );
+  }
+
   @override
   State<ProductRegisterDialog> createState() => _ProductRegisterDialogState();
 }
@@ -50,6 +73,18 @@ class _ProductRegisterDialogState extends State<ProductRegisterDialog> {
   bool _isSubmitting = false;
   String? _errorMessage;
   String? _traceId;
+
+  bool get _isEdit => widget._isEdit;
+
+  @override
+  void initState() {
+    super.initState();
+    final product = widget.product;
+    if (product == null) return;
+
+    _productNameController.text = product.productName;
+    _priceController.text = product.price?.toString() ?? '';
+  }
 
   @override
   void dispose() {
@@ -65,13 +100,24 @@ class _ProductRegisterDialogState extends State<ProductRegisterDialog> {
       _traceId = null;
     });
 
+    final price = int.tryParse(_priceController.text.trim()) ?? 0;
+    final productName = _productNameController.text;
+
     try {
-      await _productApi.registerProduct(
-        processCode: widget.processCode,
-        groupCode: widget.groupCode,
-        productName: _productNameController.text,
-        price: int.tryParse(_priceController.text.trim()) ?? 0,
-      );
+      if (_isEdit) {
+        await _productApi.updateProduct(
+          productCode: widget.product!.productCode,
+          productName: productName,
+          price: price,
+        );
+      } else {
+        await _productApi.registerProduct(
+          processCode: widget.processCode,
+          groupCode: widget.groupCode,
+          productName: productName,
+          price: price,
+        );
+      }
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } on ApiException catch (error) {
@@ -90,7 +136,7 @@ class _ProductRegisterDialogState extends State<ProductRegisterDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('제품 등록'),
+      title: Text(_isEdit ? '제품 수정' : '제품 등록'),
       content: SizedBox(
         width: 360,
         child: SingleChildScrollView(
@@ -144,7 +190,7 @@ class _ProductRegisterDialogState extends State<ProductRegisterDialog> {
           child: const Text('취소'),
         ),
         TkPrimaryButton(
-          label: '등록',
+          label: _isEdit ? '저장' : '등록',
           isLoading: _isSubmitting,
           onPressed: _isSubmitting ? null : _submit,
         ),

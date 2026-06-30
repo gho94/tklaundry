@@ -10,4 +10,6 @@ public interface IComProductService {
 
 	ComProduct registerProduct(ComProduct request);
 
+	void updateProduct(String productCode, ComProduct request);
+
 }

@@ -18,4 +18,6 @@ public interface ComProductMapper {
 
 	void insertComProduct(ComProduct product);
 
+	void updateComProduct(ComProduct product);
+
 }

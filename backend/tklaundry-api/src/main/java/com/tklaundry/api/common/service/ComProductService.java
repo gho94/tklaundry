@@ -39,6 +39,18 @@ public class ComProductService implements IComProductService {
 		return product;
 	}
 
+	@Override
+	public void updateProduct(String productCode, ComProduct request) {
+		ComProduct product = ComProduct.builder()
+				.productCode(productCode)
+				.productName(request.getProductName() != null ? request.getProductName() : "")
+				.price(request.getPrice() != null ? request.getPrice() : 0)
+				.updateUserId(commonInfo.getUser().getUserId())
+				.build();
+
+		comProductMapper.updateComProduct(product);
+	}
+
 	private String createLastProductCode() {
 		String lastProductCode = comProductMapper.selectLastProductCode();
 		int nextSeq = StringUtils.hasText(lastProductCode) ? Integer.parseInt(lastProductCode.substring(1)) + 1 : 1;

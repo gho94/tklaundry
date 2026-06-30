@@ -42,4 +42,13 @@
         )
     </insert>
 
+    <update id="updateComProduct">
+        UPDATE ComProduct
+        SET ProductName = #{productName},
+            Price = #{price},
+            UpdateUserID = #{updateUserId},
+            UpdateDate = GETDATE()
+        WHERE ProductCode = #{productCode}
+    </update>
+
 </mapper>

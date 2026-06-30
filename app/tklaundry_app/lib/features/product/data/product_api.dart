@@ -43,4 +43,19 @@ class ProductApi {
 
     return Product.fromJson(body);
   }
+
+  Future<void> updateProduct({
+    required String productCode,
+    required String productName,
+    required int price,
+  }) async {
+    await _client.put(
+      '/products/${Uri.encodeComponent(productCode)}',
+      body: {
+        'productName': productName,
+        'price': price,
+      },
+      fallbackMessage: '제품 수정에 실패했습니다.',
+    );
+  }
 }
