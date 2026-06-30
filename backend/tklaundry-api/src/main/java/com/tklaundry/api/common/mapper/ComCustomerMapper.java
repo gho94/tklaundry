@@ -12,4 +12,14 @@ public interface ComCustomerMapper {
 
 	List<ComCustomer> selectComCustomerList(@Param("aptCode") String aptCode);
 
+	String selectLastCustCode();
+
+	int countComCustomerByLocation(
+			@Param("aptCode") String aptCode,
+			@Param("buildingCode") String buildingCode,
+			@Param("floorCode") String floorCode,
+			@Param("roomCode") String roomCode);
+
+	void insertComCustomer(ComCustomer customer);
+
 }

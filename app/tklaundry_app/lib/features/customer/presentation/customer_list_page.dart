@@ -10,6 +10,7 @@ import '../../code/domain/code.dart';
 import '../../code/presentation/code_provider.dart';
 import '../domain/customer.dart';
 import 'customer_provider.dart';
+import 'customer_register_dialog.dart';
 
 class CustomerListPage extends ConsumerStatefulWidget {
   const CustomerListPage({super.key});
@@ -109,10 +110,10 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
               label: '등록',
               variant: TkButtonVariant.outline,
               icon: Icons.person_add_outlined,
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('등록 API 연동 예정입니다.')),
-                );
+              onPressed: () async {
+                final created = await CustomerRegisterDialog.show(context);
+                if (!mounted || created != true) return;
+                await _search(_selectedAptCode);
               },
             ),
             const SizedBox(width: 8),

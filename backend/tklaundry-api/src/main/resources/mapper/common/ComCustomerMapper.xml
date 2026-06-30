@@ -21,4 +21,43 @@
         ORDER BY AptCode, BuildingCode, FloorCode, RoomCode, CustName
     </select>
 
+    <select id="selectLastCustCode" resultType="string">
+        SELECT TOP 1 CustCode
+        FROM ComCustomer
+        ORDER BY CustCode DESC
+    </select>
+
+    <select id="countComCustomerByLocation" resultType="int">
+        SELECT COUNT(1)
+        FROM ComCustomer
+        WHERE AptCode = #{aptCode}
+        AND BuildingCode = #{buildingCode}
+        AND FloorCode = #{floorCode}
+        AND RoomCode = #{roomCode}
+    </select>
+
+    <insert id="insertComCustomer">
+        INSERT INTO ComCustomer (
+            CustCode,
+            CustName,
+            AptCode,
+            BuildingCode,
+            FloorCode,
+            RoomCode,
+            CustPhone,
+            InsertDate,
+            InsertUserID
+        ) VALUES (
+            #{custCode},
+            #{custName},
+            #{aptCode},
+            #{buildingCode},
+            #{floorCode},
+            #{roomCode},
+            #{custPhone},
+            GETDATE(),
+            #{insertUserId}
+        )
+    </insert>
+
 </mapper>

@@ -8,4 +8,6 @@ public interface IComCustomerService {
 
 	List<ComCustomer> listCustomers(String aptCode);
 
+	ComCustomer registerCustomer(ComCustomer request);
+
 }

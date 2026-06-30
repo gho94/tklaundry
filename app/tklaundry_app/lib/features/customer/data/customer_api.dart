@@ -17,4 +17,28 @@ class CustomerApi {
         .map((item) => Customer.fromJson(item as Map<String, dynamic>))
         .toList();
   }
+
+  Future<Customer> registerCustomer({
+    required String custName,
+    String? aptCode,
+    String? buildingCode,
+    String? floorCode,
+    String? roomCode,
+    String? custPhone,
+  }) async {
+    final body = await _client.post(
+      '/customers',
+      body: {
+        'custName': custName,
+        'aptCode': aptCode,
+        'buildingCode': buildingCode,
+        'floorCode': floorCode,
+        'roomCode': roomCode,
+        'custPhone': custPhone,
+      },
+      fallbackMessage: '고객 등록에 실패했습니다.',
+    );
+
+    return Customer.fromJson(body);
+  }
 }
