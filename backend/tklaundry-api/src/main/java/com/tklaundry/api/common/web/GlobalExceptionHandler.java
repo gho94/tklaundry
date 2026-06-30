@@ -7,13 +7,46 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import jakarta.validation.ConstraintViolationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
 	private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+	@ExceptionHandler(MethodArgumentNotValidException.class)
+	public ResponseEntity<ApiErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+		String traceId = resolveTraceId();
+		String message = ex.getBindingResult().getFieldErrors().stream()
+				.findFirst()
+				.map(error -> error.getDefaultMessage() != null ? error.getDefaultMessage() : "입력값이 올바르지 않습니다.")
+				.orElse("입력값이 올바르지 않습니다.");
+		log.warn("Validation error message={} traceId={}", message, traceId);
+		ApiErrorResponse body = new ApiErrorResponse(
+				ApiErrorCode.VALIDATION_ERROR.name(),
+				message,
+				traceId);
+		return ResponseEntity.status(ApiErrorCode.VALIDATION_ERROR.getHttpStatus()).body(body);
+	}
+
+	@ExceptionHandler(ConstraintViolationException.class)
+	public ResponseEntity<ApiErrorResponse> handleConstraintViolation(ConstraintViolationException ex) {
+		String traceId = resolveTraceId();
+		String message = ex.getConstraintViolations().stream()
+				.findFirst()
+				.map(violation -> violation.getMessage())
+				.orElse("입력값이 올바르지 않습니다.");
+		log.warn("Validation error message={} traceId={}", message, traceId);
+		ApiErrorResponse body = new ApiErrorResponse(
+				ApiErrorCode.VALIDATION_ERROR.name(),
+				message,
+				traceId);
+		return ResponseEntity.status(ApiErrorCode.VALIDATION_ERROR.getHttpStatus()).body(body);
+	}
 
 	@ExceptionHandler(ApiException.class)
 	public ResponseEntity<ApiErrorResponse> handleApiException(ApiException ex) {

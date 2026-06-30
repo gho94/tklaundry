@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/member_api.dart';
 import '../domain/member.dart';
 
-class MemberListNotifier extends AsyncNotifier<List<Member>> {
+class MemberListNotifier extends AutoDisposeAsyncNotifier<List<Member>> {
   late final MemberApi _memberApi;
 
   @override
   Future<List<Member>> build() async {
     _memberApi = MemberApi();
-    return [];
+    return _memberApi.listMembers();
   }
 
   Future<void> search() async {
@@ -19,6 +19,6 @@ class MemberListNotifier extends AsyncNotifier<List<Member>> {
 }
 
 final memberListProvider =
-    AsyncNotifierProvider<MemberListNotifier, List<Member>>(
+    AsyncNotifierProvider.autoDispose<MemberListNotifier, List<Member>>(
   MemberListNotifier.new,
 );

@@ -55,25 +55,26 @@ D:/projects/
 ## 만들 순서 (한눈에)
 
 ```
-0단계  프로젝트 뼈대 + 디자인 샘플 화면  ← /dev/design 미구현
-1단계  회원(완료) → 공통코드 → 고객 → 제품
+0단계  프로젝트 뼈대 · 공통 위젯 · 로그  (완료)
+1단계  회원(완료) → 공통코드(완료) → 고객 → 제품
 2단계  접수 → 출고 → 매출
 3단계  일계표·설정 등 (나중에)
 ```
 
-**1단계 진행**: ① 회원 완료 · ②~④ 미착수
+**1단계 진행**: ① 회원 · ② 공통코드 **완료** · ③ 고객 · ④ 제품 **다음**
 
 ---
 
 ## 핵심 규칙 (짧게)
 
 - **Java**: `common.*`(기초) / `sales.*`(영업) — 레거시 BaseForm·SalesForm 대응
-- **Java**: `IComMemberService`(인터페이스) → `ComMemberService`(구현)
-- **Flutter**: 클린 아키텍처 + Riverpod, 단순한 건 UseCase 생략
-- **로그인 후**: `authProvider`에 유저 저장 · 자동 로그인(`shared_preferences`) · 공통코드는 1-2 이후
-- **설정**: `application.yml` 하나 (profile 안 씀, 주소는 `localhost`)
-- **로그**: 요청마다 traceId, 파일 롤링 — [02_아키텍처.md](docs/02_아키텍처.md) 참고
-- **디자인**: [06_디자인_시스템.md](docs/06_디자인_시스템.md) · `/dev/design` 샘플은 미구현
+- **Java**: `I*Service` → `*Service` · login 응답 = `CommonInfo` JSON (`user` + `codes`)
+- **Flutter**: Riverpod · 단순 CRUD는 UseCase 생략
+- **로그인 후**: `authProvider` + login `codes` → 전역 `codeProvider` · 자동 로그인(`shared_preferences`)
+- **공통코드**: flat 캐시 · CRUD 후 `codeProvider.search()` · 단건 API 없음
+- **설정**: `application.yml` 하나 (profile 안 씀, `localhost`)
+- **로그**: 오류 JSON traceId · 파일 롤링 — [02_아키텍처.md](docs/02_아키텍처.md)
+- **디자인**: [06_디자인_시스템.md](docs/06_디자인_시스템.md) · `shared/widgets/Tk*`
 
 ---
 

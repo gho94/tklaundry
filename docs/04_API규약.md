@@ -52,11 +52,17 @@
 // 요청
 { "userId": "admin", "password": "..." }
 
-// 성공 200 (현재 — ① 회원만)
+// 성공 200
 {
-  "user": { "userId": "admin", "userName": "관리자" }
+  "user": { "userId": "admin", "userName": "관리자" },
+  "codes": [
+    { "codeId": "A00001", "pCodeId": "Root", "codeName": "고객 관리" }
+  ]
 }
 ```
+
+- login 응답 본문 = 서버 `CommonInfo` JSON (`user` + `codes`)
+- `codes`: flat 배열 → 앱 `codeProvider` 적재 · `Map<codeId, …>` + `Map<pCodeId, List<…>>` 변환
 
 **회원가입** `POST /api/auth/register`
 
@@ -72,7 +78,7 @@
 ```
 
 - `password`는 응답에 **포함하지 않음**
-- **비로그인** 가입: 서버 `CommonInfo` 바인딩 + `LogInDate` 갱신 → 앱에서 즉시 로그인
+- **비로그인** 가입: 서버 `bindLogin(member, codes)` + `LogInDate` 갱신 → 앱에서 즉시 로그인
 - **로그인 중** 관리자 등록: member만 반환, 기존 관리자 세션 유지
 
 **회원 목록** `GET /api/members`
@@ -112,21 +118,55 @@ true
 
 `true` = 이미 존재, `false` = 사용 가능
 
-> **1-2 공통코드** 구현 후 login 응답에 `codes` flat 배열 추가 예정:
-> `{ "user": { ... }, "codes": [ { "codeId", "pCodeId", "codeName" }, ... ] }`
-> 앱에서 `Map<codeId, …>` + `Map<pCodeId, List<…>>` 변환
-
 ### 공통코드
 
 | Method | 경로 | 설명 |
 |--------|------|------|
-| GET | `/api/codes` | 전체 flat |
-| GET | `/api/codes/{codeId}` | 단건 |
+| GET | `/api/codes` | 전체 flat (캐시 갱신용) |
 | POST | `/api/codes` | 등록 |
 | PUT | `/api/codes/{codeId}` | 수정 |
-| DELETE | `/api/codes/{codeId}` | 삭제 |
+| DELETE | `/api/codes/{codeId}` | 삭제 (하위 재귀) |
 
-- `codes`: flat 배열 (login 응답 또는 `GET /api/codes`로 앱 캐시 갱신)
+- 단건 조회 API 없음 — 앱은 login `codes` 또는 `GET /api/codes` flat 캐시 사용
+
+**코드 등록** `POST /api/codes`
+
+요청 (`codeId`는 보내지 않음 — 서버 채번):
+
+```json
+// 최상위 (Root 직속)
+{ "pCodeId": "Root", "codeName": "분류명" }
+
+// 하위 (부모 codeId)
+{ "pCodeId": "A00001", "codeName": "하위명" }
+```
+
+- `pCodeId`, `codeName`: `@NotBlank` (누락 시 `400` `VALIDATION_ERROR`)
+- 채번: 레거시 `FrmBaseCode`와 동일 — `header`(예 `A0`, `A1`) + 형제 max 일련 +1
+
+```json
+// 성공 201
+{ "codeId": "A10004", "pCodeId": "A00001", "codeName": "하위명" }
+
+// 필수값 누락 400
+{ "code": "VALIDATION_ERROR", "message": "코드명을 입력해 주세요.", "traceId": "...", "details": {} }
+```
+
+**코드 수정** `PUT /api/codes/{codeId}`
+
+```json
+// 요청 (codeName만)
+{ "codeName": "변경된 코드명" }
+
+// 성공 204 (body 없음)
+```
+
+**코드 삭제** `DELETE /api/codes/{codeId}`
+
+```json
+// 성공 204 (body 없음)
+// 선택 노드 + 하위 코드 재귀 삭제
+```
 
 ### 고객
 

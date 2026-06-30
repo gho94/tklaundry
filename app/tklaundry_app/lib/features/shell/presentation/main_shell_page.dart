@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/widgets/tk_sidebar.dart';
 import '../../auth/presentation/auth_provider.dart';
+import '../../code/presentation/code_list_page.dart';
 import '../../member/presentation/member_list_page.dart';
 
 class MainShellPage extends ConsumerStatefulWidget {
@@ -140,6 +141,14 @@ class _ShellContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (selectedItemId == 'code') {
+      return Container(
+        color: AppColors.neutral50,
+        padding: const EdgeInsets.all(AppSpacing.s4),
+        child: const CodeListPage(),
+      );
+    }
+
     if (selectedItemId == 'member') {
       return Container(
         color: AppColors.neutral50,
