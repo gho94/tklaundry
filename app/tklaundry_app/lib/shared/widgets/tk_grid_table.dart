@@ -17,20 +17,29 @@ class TkGridColumn {
   final TextAlign align;
 }
 
+typedef TkGridRowBuilder = List<Widget> Function(int index);
+
 class TkGridTable extends StatelessWidget {
   const TkGridTable({
     super.key,
     required this.columns,
-    required this.rows,
+    this.rows,
+    this.itemCount,
+    this.itemBuilder,
     this.emptyMessage = '데이터가 없습니다.',
     this.rowHeight = 44,
     this.headerHeight = 44,
     this.onRowTap,
     this.selectedRowIndex,
-  });
+  }) : assert(
+          rows != null || (itemCount != null && itemBuilder != null),
+          'rows 또는 itemCount·itemBuilder가 필요합니다.',
+        );
 
   final List<TkGridColumn> columns;
-  final List<List<Widget>> rows;
+  final List<List<Widget>>? rows;
+  final int? itemCount;
+  final TkGridRowBuilder? itemBuilder;
   final String emptyMessage;
   final double rowHeight;
   final double headerHeight;
@@ -39,9 +48,15 @@ class TkGridTable extends StatelessWidget {
 
   static const _borderSide = BorderSide(color: AppColors.border, width: 1);
 
+  int get _length => rows?.length ?? itemCount!;
+
+  List<Widget> _cellsAt(int index) {
+    return rows != null ? rows![index] : itemBuilder!(index);
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (rows.isEmpty) {
+    if (_length == 0) {
       return Center(
         child: Text(
           emptyMessage,
@@ -57,57 +72,34 @@ class TkGridTable extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Table(
-              border: const TableBorder(
-                top: _borderSide,
-                left: _borderSide,
-                right: _borderSide,
-                bottom: _borderSide,
-                verticalInside: _borderSide,
-              ),
-              columnWidths: columnWidths,
-              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-              children: [
-                TableRow(
-                  decoration: const BoxDecoration(color: AppColors.neutral100),
-                  children: [
-                    for (final column in columns) _headerCell(column),
-                  ],
-                ),
-              ],
+            _HeaderRow(
+              columns: columns,
+              widths: columnWidths,
+              height: headerHeight,
             ),
             Expanded(
-              child: SingleChildScrollView(
-                child: Table(
-                  border: const TableBorder(
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  border: Border(
                     left: _borderSide,
                     right: _borderSide,
-                    bottom: _borderSide,
-                    horizontalInside: _borderSide,
-                    verticalInside: _borderSide,
                   ),
-                  columnWidths: columnWidths,
-                  defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                  children: [
-                    for (var rowIndex = 0; rowIndex < rows.length; rowIndex++)
-                      TableRow(
-                        decoration: selectedRowIndex == rowIndex
-                            ? BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.08),
-                              )
-                            : null,
-                        children: [
-                          for (var i = 0; i < columns.length; i++)
-                            _dataCell(
-                              rows[rowIndex][i],
-                              columns[i],
-                              onTap: onRowTap == null
-                                  ? null
-                                  : () => onRowTap!(rowIndex),
-                            ),
-                        ],
-                      ),
-                  ],
+                ),
+                child: ListView.builder(
+                  itemCount: _length,
+                  itemExtent: rowHeight,
+                  itemBuilder: (context, index) {
+                    return _DataRow(
+                      cells: _cellsAt(index),
+                      columns: columns,
+                      widths: columnWidths,
+                      selected: selectedRowIndex == index,
+                      rowHeight: rowHeight,
+                      onTap: onRowTap == null
+                          ? null
+                          : () => onRowTap!(index),
+                    );
+                  },
                 ),
               ),
             ),
@@ -117,7 +109,7 @@ class TkGridTable extends StatelessWidget {
     );
   }
 
-  Map<int, TableColumnWidth> _buildColumnWidths(double totalWidth) {
+  List<double> _buildColumnWidths(double totalWidth) {
     final fixedTotal = columns
         .where((column) => column.width != null)
         .fold(0.0, (sum, column) => sum + column.width!);
@@ -125,66 +117,182 @@ class TkGridTable extends StatelessWidget {
     final remaining = (totalWidth - fixedTotal).clamp(0, double.infinity);
     final equalWidth = flexibleCount == 0 ? 0.0 : remaining / flexibleCount;
 
-    return {
-      for (var i = 0; i < columns.length; i++)
-        i: columns[i].width != null
-            ? FixedColumnWidth(columns[i].width!)
-            : FixedColumnWidth(equalWidth),
-    };
+    return [
+      for (final column in columns)
+        column.width ?? equalWidth,
+    ];
   }
+}
 
-  Widget _headerCell(TkGridColumn column) {
-    return SizedBox(
-      height: headerHeight,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Align(
-          alignment: _alignment(column.align, column.numeric),
-          child: Text(
-            column.label,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-              fontSize: 13,
-            ),
+class _HeaderRow extends StatelessWidget {
+  const _HeaderRow({
+    required this.columns,
+    required this.widths,
+    required this.height,
+  });
+
+  final List<TkGridColumn> columns;
+  final List<double> widths;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: AppColors.neutral100,
+        border: Border(
+          top: TkGridTable._borderSide,
+          left: TkGridTable._borderSide,
+          right: TkGridTable._borderSide,
+          bottom: TkGridTable._borderSide,
+        ),
+      ),
+      child: SizedBox(
+        height: height,
+        child: Row(
+          children: [
+            for (var i = 0; i < columns.length; i++)
+              _HeaderCell(
+                column: columns[i],
+                width: widths[i],
+                showRightBorder: i < columns.length - 1,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeaderCell extends StatelessWidget {
+  const _HeaderCell({
+    required this.column,
+    required this.width,
+    required this.showRightBorder,
+  });
+
+  final TkGridColumn column;
+  final double width;
+  final bool showRightBorder;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      decoration: BoxDecoration(
+        border: showRightBorder
+            ? const Border(right: TkGridTable._borderSide)
+            : null,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Align(
+        alignment: _alignment(column.align, column.numeric),
+        child: Text(
+          column.label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+            fontSize: 13,
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _dataCell(Widget child, TkGridColumn column, {VoidCallback? onTap}) {
-    final isInteractive = child is TkGridComboBox || child is TkComboBox;
+class _DataRow extends StatelessWidget {
+  const _DataRow({
+    required this.cells,
+    required this.columns,
+    required this.widths,
+    required this.selected,
+    required this.rowHeight,
+    this.onTap,
+  });
 
-    final cell = SizedBox(
-      height: rowHeight,
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: isInteractive ? 4 : 12,
-          vertical: isInteractive ? 4 : 0,
-        ),
-        child: Align(
-          alignment: _alignment(column.align, column.numeric),
-          child: child,
+  final List<Widget> cells;
+  final List<TkGridColumn> columns;
+  final List<double> widths;
+  final bool selected;
+  final double rowHeight;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final row = DecoratedBox(
+      decoration: BoxDecoration(
+        color: selected
+            ? AppColors.primary.withValues(alpha: 0.08)
+            : null,
+        border: const Border(bottom: TkGridTable._borderSide),
+      ),
+      child: SizedBox(
+        height: rowHeight,
+        child: Row(
+          children: [
+            for (var i = 0; i < columns.length; i++)
+              _DataCell(
+                column: columns[i],
+                width: widths[i],
+                showRightBorder: i < columns.length - 1,
+                child: cells[i],
+              ),
+          ],
         ),
       ),
     );
 
-    if (onTap == null) return cell;
+    if (onTap == null) return row;
 
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: cell,
+      child: row,
     );
   }
+}
 
-  Alignment _alignment(TextAlign align, bool numeric) {
-    if (numeric) return Alignment.centerRight;
-    return switch (align) {
-      TextAlign.center => Alignment.center,
-      TextAlign.end => Alignment.centerRight,
-      _ => Alignment.centerLeft,
-    };
+class _DataCell extends StatelessWidget {
+  const _DataCell({
+    required this.child,
+    required this.column,
+    required this.width,
+    required this.showRightBorder,
+  });
+
+  final Widget child;
+  final TkGridColumn column;
+  final double width;
+  final bool showRightBorder;
+
+  @override
+  Widget build(BuildContext context) {
+    final isInteractive = child is TkGridComboBox || child is TkComboBox;
+
+    return Container(
+      width: width,
+      decoration: BoxDecoration(
+        border: showRightBorder
+            ? const Border(right: TkGridTable._borderSide)
+            : null,
+      ),
+      padding: EdgeInsets.symmetric(
+        horizontal: isInteractive ? 4 : 12,
+        vertical: isInteractive ? 4 : 0,
+      ),
+      child: Align(
+        alignment: _alignment(column.align, column.numeric),
+        child: child,
+      ),
+    );
   }
+}
+
+Alignment _alignment(TextAlign align, bool numeric) {
+  if (numeric) return Alignment.centerRight;
+  return switch (align) {
+    TextAlign.center => Alignment.center,
+    TextAlign.end => Alignment.centerRight,
+    _ => Alignment.centerLeft,
+  };
 }

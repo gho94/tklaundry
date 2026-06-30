@@ -47,14 +47,13 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     ];
   }
 
-  String _codeName(List<Code> codes, String codeId) {
+  Map<String, String> _codeNameMap(List<Code> codes) {
+    return {for (final code in codes) code.codeId.trim(): code.codeName};
+  }
+
+  String _lookupCodeName(Map<String, String> codeNames, String codeId) {
     if (codeId.isEmpty) return '';
-    for (final code in codes) {
-      if (code.codeId.trim() == codeId) {
-        return code.codeName;
-      }
-    }
-    return codeId;
+    return codeNames[codeId.trim()] ?? codeId;
   }
 
   Future<void> _search(String? aptCode) async {
@@ -79,6 +78,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     final customersAsync = ref.watch(customerListProvider);
     final codesAsync = ref.watch(codeProvider);
     final codes = codesAsync.asData?.value ?? const <Code>[];
+    final codeNames = _codeNameMap(codes);
     final aptItems = _aptComboItems(codes);
     _ensureInitialSearch(aptItems);
 
@@ -174,13 +174,12 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
 
                       return TkGridTable(
                         columns: _columns,
+                        itemCount: customers.length,
+                        itemBuilder: (index) =>
+                            _buildRow(codeNames, customers[index]),
                         selectedRowIndex: _selectedRowIndex,
                         onRowTap: (index) =>
                             setState(() => _selectedRowIndex = index),
-                        rows: [
-                          for (final customer in customers)
-                            _buildRow(codes, customer),
-                        ],
                       );
                     },
                   );
@@ -193,13 +192,13 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     );
   }
 
-  List<Widget> _buildRow(List<Code> codes, Customer customer) {
+  List<Widget> _buildRow(Map<String, String> codeNames, Customer customer) {
     return [
       Text(customer.custName),
-      Text(_codeName(codes, customer.aptCode)),
-      Text(_codeName(codes, customer.buildingCode)),
-      Text(_codeName(codes, customer.floorCode)),
-      Text(_codeName(codes, customer.roomCode)),
+      Text(_lookupCodeName(codeNames, customer.aptCode)),
+      Text(_lookupCodeName(codeNames, customer.buildingCode)),
+      Text(_lookupCodeName(codeNames, customer.floorCode)),
+      Text(_lookupCodeName(codeNames, customer.roomCode)),
       Text(customer.custPhone),
     ];
   }
