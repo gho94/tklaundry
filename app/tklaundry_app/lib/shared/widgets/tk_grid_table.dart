@@ -54,17 +54,15 @@ class TkGridTable extends StatelessWidget {
       builder: (context, constraints) {
         final columnWidths = _buildColumnWidths(constraints.maxWidth);
 
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minWidth: constraints.maxWidth),
-            child: Table(
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Table(
               border: const TableBorder(
                 top: _borderSide,
-                bottom: _borderSide,
                 left: _borderSide,
                 right: _borderSide,
-                horizontalInside: _borderSide,
+                bottom: _borderSide,
                 verticalInside: _borderSide,
               ),
               columnWidths: columnWidths,
@@ -76,25 +74,44 @@ class TkGridTable extends StatelessWidget {
                     for (final column in columns) _headerCell(column),
                   ],
                 ),
-                for (var rowIndex = 0; rowIndex < rows.length; rowIndex++)
-                  TableRow(
-                    decoration: selectedRowIndex == rowIndex
-                        ? BoxDecoration(color: AppColors.primary.withValues(alpha: 0.08))
-                        : null,
-                    children: [
-                      for (var i = 0; i < columns.length; i++)
-                        _dataCell(
-                          rows[rowIndex][i],
-                          columns[i],
-                          onTap: onRowTap == null
-                              ? null
-                              : () => onRowTap!(rowIndex),
-                        ),
-                    ],
-                  ),
               ],
             ),
-          ),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Table(
+                  border: const TableBorder(
+                    left: _borderSide,
+                    right: _borderSide,
+                    bottom: _borderSide,
+                    horizontalInside: _borderSide,
+                    verticalInside: _borderSide,
+                  ),
+                  columnWidths: columnWidths,
+                  defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                  children: [
+                    for (var rowIndex = 0; rowIndex < rows.length; rowIndex++)
+                      TableRow(
+                        decoration: selectedRowIndex == rowIndex
+                            ? BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.08),
+                              )
+                            : null,
+                        children: [
+                          for (var i = 0; i < columns.length; i++)
+                            _dataCell(
+                              rows[rowIndex][i],
+                              columns[i],
+                              onTap: onRowTap == null
+                                  ? null
+                                  : () => onRowTap!(rowIndex),
+                            ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         );
       },
     );
