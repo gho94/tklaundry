@@ -31,11 +31,6 @@ public class CodeController {
 		return ResponseEntity.ok(comBaseDataService.listCodes());
 	}
 
-	@GetMapping("/{codeId}")
-	public ResponseEntity<ComBaseData> getCode(@PathVariable String codeId) {
-		return ResponseEntity.ok(comBaseDataService.getCode(codeId));
-	}
-
 	@PostMapping
 	public ResponseEntity<ComBaseData> registerCode(@Valid @RequestBody ComBaseData request) {
 		ComBaseData created = comBaseDataService.registerCode(request);

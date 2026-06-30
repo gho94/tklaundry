@@ -12,8 +12,6 @@ public interface ComBaseDataMapper {
 
 	List<ComBaseData> selectComBaseDataList();
 
-	ComBaseData selectComBaseDataByCodeId(@Param("codeId") String codeId);
-
 	List<ComBaseData> selectComBaseDataListByPCodeId(@Param("pCodeId") String pCodeId);
 
 	String selectLastCodeId();

@@ -17,15 +17,6 @@ class CodeApi {
         .toList();
   }
 
-  Future<Code> getCode(String codeId) async {
-    final body = await _client.get(
-      '/codes/${Uri.encodeComponent(codeId)}',
-      fallbackMessage: '코드 정보를 불러오지 못했습니다.',
-    );
-
-    return Code.fromJson(body);
-  }
-
   Future<Code> registerCode({
     required String pCodeId,
     required String codeName,

@@ -130,7 +130,7 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
   }
 
   Future<void> _editSelected(Code code) async {
-    final updated = await CodeEditDialog.show(context, code.codeId);
+    final updated = await CodeEditDialog.show(context, code);
     if (updated != true || !mounted) return;
 
     await ref.read(codeProvider.notifier).search();
