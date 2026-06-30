@@ -172,10 +172,88 @@ true
 
 | Method | 경로 | 설명 |
 |--------|------|------|
-| GET | `/api/customers?q=` | 목록·검색 |
-| GET | `/api/customers/{custCode}` | 상세 |
+| GET | `/api/customers` | 목록 (전체) |
+| GET | `/api/customers?aptCode=` | 목록·아파트 필터 (`aptCode` 생략=전체, `=`빈값=기타) |
 | POST | `/api/customers` | 등록 |
 | PUT | `/api/customers/{custCode}` | 수정 |
+| DELETE | `/api/customers/{custCode}` | 삭제 |
+
+- 단건 조회 API 없음 — 앱은 목록 그리드 행으로 수정 다이얼로그 채움 (레거시 `FrmCustomer` 더블클릭과 동일)
+- 수정·삭제는 사전 `NOT_FOUND` 조회 없음
+
+**고객 목록** `GET /api/customers` · `GET /api/customers?aptCode=A20001`
+
+```json
+[
+  {
+    "custCode": "C0001",
+    "custName": "세교 4-1204",
+    "aptCode": "A20001",
+    "buildingCode": "A30004",
+    "floorCode": "A20012",
+    "roomCode": "A20004",
+    "custPhone": "010-1234-5678"
+  }
+]
+```
+
+- `aptCode` 쿼리 생략: `WHERE` 없음 (전체)
+- `aptCode` 값 지정: `WHERE AptCode = #{aptCode}` (`aptCode=` 빈 문자열이면 기타)
+
+**고객 등록** `POST /api/customers`
+
+```json
+// 요청 (미선택 콤보는 null 또는 필드 생략)
+{
+  "custName": "세교 4-1204",
+  "aptCode": "A20001",
+  "buildingCode": "A30004",
+  "floorCode": "A20012",
+  "roomCode": "A20004",
+  "custPhone": "010-1234-5678"
+}
+
+// 성공 201
+{
+  "custCode": "C1913",
+  "custName": "세교 4-1204",
+  "aptCode": "A20001",
+  "buildingCode": "A30004",
+  "floorCode": "A20012",
+  "roomCode": "A20004",
+  "custPhone": "010-1234-5678"
+}
+
+// 동일 위치 중복 409 (4코드 모두 null이 아닐 때만 검사)
+{ "code": "CONFLICT", "message": "이미 등록된 정보입니다.", "traceId": "...", "details": {} }
+```
+
+- `custCode`: 서버 채번 (`C` + 4자리, `MAX(CustCode)+1`)
+- DB 저장 시 미선택 필드 `null` → `""`
+
+**고객 수정** `PUT /api/customers/{custCode}`
+
+```json
+// 요청 (custCode는 path만 사용)
+{
+  "custName": "세교 4-1205",
+  "aptCode": "A20001",
+  "buildingCode": "A30004",
+  "floorCode": "A20012",
+  "roomCode": "A20005",
+  "custPhone": ""
+}
+
+// 성공 204 (body 없음)
+```
+
+- 수정 시 위치 중복 검사 없음 (레거시 수정 모드와 동일)
+
+**고객 삭제** `DELETE /api/customers/{custCode}`
+
+```json
+// 성공 204 (body 없음)
+```
 
 ### 제품
 
