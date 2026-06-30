@@ -58,4 +58,11 @@ class ProductApi {
       fallbackMessage: '제품 수정에 실패했습니다.',
     );
   }
+
+  Future<void> deleteProduct(String productCode) async {
+    await _client.delete(
+      '/products/${Uri.encodeComponent(productCode)}',
+      fallbackMessage: '제품 삭제에 실패했습니다.',
+    );
+  }
 }

@@ -51,6 +51,11 @@ public class ComProductService implements IComProductService {
 		comProductMapper.updateComProduct(product);
 	}
 
+	@Override
+	public void removeProduct(String productCode) {
+		comProductMapper.deleteComProduct(productCode);
+	}
+
 	private String createLastProductCode() {
 		String lastProductCode = comProductMapper.selectLastProductCode();
 		int nextSeq = StringUtils.hasText(lastProductCode) ? Integer.parseInt(lastProductCode.substring(1)) + 1 : 1;

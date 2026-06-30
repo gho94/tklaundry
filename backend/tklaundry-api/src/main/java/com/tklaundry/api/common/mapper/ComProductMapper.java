@@ -20,4 +20,6 @@ public interface ComProductMapper {
 
 	void updateComProduct(ComProduct product);
 
+	void deleteComProduct(@Param("productCode") String productCode);
+
 }

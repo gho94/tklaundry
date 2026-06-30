@@ -8,6 +8,7 @@ import '../../../shared/widgets/tk_grid_table.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
 import '../../code/domain/code.dart';
 import '../../code/presentation/code_provider.dart';
+import '../data/product_api.dart';
 import '../domain/product.dart';
 import 'product_provider.dart';
 import 'product_register_dialog.dart';
@@ -36,6 +37,8 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
   String? _selectedGroupCode;
   int? _selectedRowIndex;
   bool _initialized = false;
+  bool _isDeleting = false;
+  final _productApi = ProductApi();
 
   List<TkComboItem<String>> _processComboItems(List<Code> codes) {
     final processes = codes
@@ -140,6 +143,54 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
     return codeId;
   }
 
+  Future<void> _deleteSelected(Product product) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('제품 삭제'),
+        content: Text('\'${product.productName}\' 제품을 삭제하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isDeleting = true);
+
+    try {
+      await _productApi.deleteProduct(product.productCode);
+      if (!mounted) return;
+
+      await _search(
+        processCode: _selectedProcessCode!,
+        groupCode: _selectedGroupCode!,
+      );
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('제품이 삭제되었습니다.')),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(productListProvider);
@@ -221,6 +272,23 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
                         processCode: effectiveProcessCode,
                         groupCode: effectiveGroupCode,
                       );
+                    },
+            ),
+            const SizedBox(width: 8),
+            TkPrimaryButton(
+              label: '삭제',
+              variant: TkButtonVariant.outline,
+              icon: Icons.delete_outline,
+              isLoading: _isDeleting,
+              onPressed: _isDeleting || _selectedRowIndex == null
+                  ? null
+                  : () {
+                      final products = productsAsync.asData?.value;
+                      if (products == null ||
+                          _selectedRowIndex! >= products.length) {
+                        return;
+                      }
+                      _deleteSelected(products[_selectedRowIndex!]);
                     },
             ),
             const SizedBox(width: 8),

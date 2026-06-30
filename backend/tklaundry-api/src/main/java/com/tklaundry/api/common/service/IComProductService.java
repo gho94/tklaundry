@@ -12,4 +12,6 @@ public interface IComProductService {
 
 	void updateProduct(String productCode, ComProduct request);
 
+	void removeProduct(String productCode);
+
 }
