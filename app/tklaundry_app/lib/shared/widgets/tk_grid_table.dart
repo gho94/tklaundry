@@ -30,6 +30,7 @@ class TkGridTable extends StatelessWidget {
     this.rowHeight = 44,
     this.headerHeight = 44,
     this.onRowTap,
+    this.onRowDoubleTap,
     this.selectedRowIndex,
   }) : assert(
           rows != null || (itemCount != null && itemBuilder != null),
@@ -44,6 +45,7 @@ class TkGridTable extends StatelessWidget {
   final double rowHeight;
   final double headerHeight;
   final void Function(int index)? onRowTap;
+  final void Function(int index)? onRowDoubleTap;
   final int? selectedRowIndex;
 
   static const _borderSide = BorderSide(color: AppColors.border, width: 1);
@@ -98,6 +100,9 @@ class TkGridTable extends StatelessWidget {
                       onTap: onRowTap == null
                           ? null
                           : () => onRowTap!(index),
+                      onDoubleTap: onRowDoubleTap == null
+                          ? null
+                          : () => onRowDoubleTap!(index),
                     );
                   },
                 ),
@@ -208,6 +213,7 @@ class _DataRow extends StatelessWidget {
     required this.selected,
     required this.rowHeight,
     this.onTap,
+    this.onDoubleTap,
   });
 
   final List<Widget> cells;
@@ -216,6 +222,7 @@ class _DataRow extends StatelessWidget {
   final bool selected;
   final double rowHeight;
   final VoidCallback? onTap;
+  final VoidCallback? onDoubleTap;
 
   @override
   Widget build(BuildContext context) {
@@ -242,10 +249,11 @@ class _DataRow extends StatelessWidget {
       ),
     );
 
-    if (onTap == null) return row;
+    if (onTap == null && onDoubleTap == null) return row;
 
     return GestureDetector(
       onTap: onTap,
+      onDoubleTap: onDoubleTap,
       behavior: HitTestBehavior.opaque,
       child: row,
     );

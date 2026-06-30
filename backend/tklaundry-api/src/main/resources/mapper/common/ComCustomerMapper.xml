@@ -60,4 +60,22 @@
         )
     </insert>
 
+    <update id="updateComCustomer">
+        UPDATE ComCustomer
+        SET CustName = #{custName},
+            AptCode = #{aptCode},
+            BuildingCode = #{buildingCode},
+            FloorCode = #{floorCode},
+            RoomCode = #{roomCode},
+            CustPhone = #{custPhone},
+            UpdateUserID = #{updateUserId},
+            UpdateDate = GETDATE()
+        WHERE CustCode = #{custCode}
+    </update>
+
+    <delete id="deleteComCustomer">
+        DELETE FROM ComCustomer
+        WHERE CustCode = #{custCode}
+    </delete>
+
 </mapper>

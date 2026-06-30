@@ -9,16 +9,30 @@ import '../../../shared/widgets/tk_text_field.dart';
 import '../../code/domain/code.dart';
 import '../../code/presentation/code_provider.dart';
 import '../data/customer_api.dart';
+import '../domain/customer.dart';
 
 class CustomerRegisterDialog extends ConsumerStatefulWidget {
-  const CustomerRegisterDialog({super.key});
+  const CustomerRegisterDialog({super.key, this.customer});
 
-  static Future<bool?> show(BuildContext context) {
+  final Customer? customer;
+
+  bool get _isEdit => customer != null;
+
+  static Future<bool?> showCreate(BuildContext context) {
     return showDialog<bool>(
       context: context,
       builder: (_) => const CustomerRegisterDialog(),
     );
   }
+
+  static Future<bool?> showEdit(BuildContext context, Customer customer) {
+    return showDialog<bool>(
+      context: context,
+      builder: (_) => CustomerRegisterDialog(customer: customer),
+    );
+  }
+
+  static Future<bool?> show(BuildContext context) => showCreate(context);
 
   @override
   ConsumerState<CustomerRegisterDialog> createState() =>
@@ -42,6 +56,24 @@ class _CustomerRegisterDialogState
   bool _isSubmitting = false;
   String? _errorMessage;
   String? _traceId;
+
+  bool get _isEdit => widget._isEdit;
+
+  @override
+  void initState() {
+    super.initState();
+    final customer = widget.customer;
+    if (customer == null) return;
+
+    _custNameController.text = customer.custName;
+    _custPhoneController.text = customer.custPhone;
+    _aptCode = _comboValue(customer.aptCode);
+    _buildingCode = _comboValue(customer.buildingCode);
+    _floorCode = _comboValue(customer.floorCode);
+    _roomCode = _comboValue(customer.roomCode);
+  }
+
+  String? _comboValue(String code) => code.isEmpty ? null : code.trim();
 
   @override
   void dispose() {
@@ -203,14 +235,26 @@ class _CustomerRegisterDialogState
     });
 
     try {
-      await _customerApi.registerCustomer(
-        custName: _custNameController.text,
-        aptCode: _aptCode,
-        buildingCode: _buildingCode,
-        floorCode: _floorCode,
-        roomCode: _roomCode,
-        custPhone: _custPhoneController.text,
-      );
+      if (_isEdit) {
+        await _customerApi.updateCustomer(
+          custCode: widget.customer!.custCode,
+          custName: _custNameController.text,
+          aptCode: _aptCode,
+          buildingCode: _buildingCode,
+          floorCode: _floorCode,
+          roomCode: _roomCode,
+          custPhone: _custPhoneController.text,
+        );
+      } else {
+        await _customerApi.registerCustomer(
+          custName: _custNameController.text,
+          aptCode: _aptCode,
+          buildingCode: _buildingCode,
+          floorCode: _floorCode,
+          roomCode: _roomCode,
+          custPhone: _custPhoneController.text,
+        );
+      }
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } on ApiException catch (error) {
@@ -231,7 +275,7 @@ class _CustomerRegisterDialogState
     final codesAsync = ref.watch(codeProvider);
 
     return AlertDialog(
-      title: const Text('고객 등록'),
+      title: Text(_isEdit ? '고객 수정' : '고객 등록'),
       content: SizedBox(
         width: 420,
         child: codesAsync.when(
@@ -256,7 +300,7 @@ class _CustomerRegisterDialogState
           child: const Text('취소'),
         ),
         TkPrimaryButton(
-          label: '저장',
+          label: _isEdit ? '저장' : '등록',
           isLoading: _isSubmitting,
           onPressed: _isSubmitting || codesAsync.isLoading ? null : _submit,
         ),

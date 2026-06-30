@@ -8,6 +8,7 @@ import '../../../shared/widgets/tk_grid_table.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
 import '../../code/domain/code.dart';
 import '../../code/presentation/code_provider.dart';
+import '../data/customer_api.dart';
 import '../domain/customer.dart';
 import 'customer_provider.dart';
 import 'customer_register_dialog.dart';
@@ -34,6 +35,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
   String? _selectedAptCode;
   int? _selectedRowIndex;
   bool _initialized = false;
+  bool _isDeleting = false;
+  final _customerApi = CustomerApi();
 
   List<TkComboItem<String>> _aptComboItems(List<Code> codes) {
     final apartments = codes
@@ -74,6 +77,51 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     });
   }
 
+  Future<void> _deleteSelected(Customer customer) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('고객 삭제'),
+        content: Text('\'${customer.custName}\' 고객을 삭제하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isDeleting = true);
+
+    try {
+      await _customerApi.deleteCustomer(customer.custCode);
+      if (!mounted) return;
+
+      await _search(_selectedAptCode);
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('고객이 삭제되었습니다.')),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final customersAsync = ref.watch(customerListProvider);
@@ -111,7 +159,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
               variant: TkButtonVariant.outline,
               icon: Icons.person_add_outlined,
               onPressed: () async {
-                final created = await CustomerRegisterDialog.show(context);
+                final created = await CustomerRegisterDialog.showCreate(context);
                 if (!mounted || created != true) return;
                 await _search(_selectedAptCode);
               },
@@ -121,12 +169,16 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
               label: '삭제',
               variant: TkButtonVariant.outline,
               icon: Icons.delete_outline,
-              onPressed: _selectedRowIndex == null
+              isLoading: _isDeleting,
+              onPressed: _isDeleting || _selectedRowIndex == null
                   ? null
                   : () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('삭제 API 연동 예정입니다.')),
-                      );
+                      final customers = customersAsync.asData?.value;
+                      if (customers == null ||
+                          _selectedRowIndex! >= customers.length) {
+                        return;
+                      }
+                      _deleteSelected(customers[_selectedRowIndex!]);
                     },
             ),
             const SizedBox(width: 8),
@@ -181,6 +233,14 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                         selectedRowIndex: _selectedRowIndex,
                         onRowTap: (index) =>
                             setState(() => _selectedRowIndex = index),
+                        onRowDoubleTap: (index) async {
+                          final updated = await CustomerRegisterDialog.showEdit(
+                            context,
+                            customers[index],
+                          );
+                          if (!mounted || updated != true) return;
+                          await _search(_selectedAptCode);
+                        },
                       );
                     },
                   );

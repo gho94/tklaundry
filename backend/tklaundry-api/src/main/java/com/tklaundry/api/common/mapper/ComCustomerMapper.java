@@ -22,4 +22,8 @@ public interface ComCustomerMapper {
 
 	void insertComCustomer(ComCustomer customer);
 
+	void updateComCustomer(ComCustomer customer);
+
+	void deleteComCustomer(@Param("custCode") String custCode);
+
 }

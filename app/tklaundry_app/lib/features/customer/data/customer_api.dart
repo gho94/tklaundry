@@ -41,4 +41,34 @@ class CustomerApi {
 
     return Customer.fromJson(body);
   }
+
+  Future<void> updateCustomer({
+    required String custCode,
+    required String custName,
+    String? aptCode,
+    String? buildingCode,
+    String? floorCode,
+    String? roomCode,
+    String? custPhone,
+  }) async {
+    await _client.put(
+      '/customers/${Uri.encodeComponent(custCode)}',
+      body: {
+        'custName': custName,
+        'aptCode': aptCode,
+        'buildingCode': buildingCode,
+        'floorCode': floorCode,
+        'roomCode': roomCode,
+        'custPhone': custPhone,
+      },
+      fallbackMessage: '고객 수정에 실패했습니다.',
+    );
+  }
+
+  Future<void> deleteCustomer(String custCode) async {
+    await _client.delete(
+      '/customers/${Uri.encodeComponent(custCode)}',
+      fallbackMessage: '고객 삭제에 실패했습니다.',
+    );
+  }
 }

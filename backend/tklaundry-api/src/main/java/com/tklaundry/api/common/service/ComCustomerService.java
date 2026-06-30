@@ -60,10 +60,31 @@ public class ComCustomerService implements IComCustomerService {
 		return customer;
 	}
 
+	@Override
+	public void updateCustomer(String custCode, ComCustomer request) {
+		ComCustomer customer = ComCustomer.builder()
+				.custCode(custCode)
+				.custName(request.getCustName() != null ? request.getCustName() : "")
+				.aptCode(request.getAptCode() != null ? request.getAptCode() : "")
+				.buildingCode(request.getBuildingCode() != null ? request.getBuildingCode() : "")
+				.floorCode(request.getFloorCode() != null ? request.getFloorCode() : "")
+				.roomCode(request.getRoomCode() != null ? request.getRoomCode() : "")
+				.custPhone(request.getCustPhone() != null ? request.getCustPhone() : "")
+				.updateUserId(commonInfo.getUser().getUserId())
+				.build();
+
+		comCustomerMapper.updateComCustomer(customer);
+	}
+
 	private String createLastCustCode() {
 		String lastCustCode = comCustomerMapper.selectLastCustCode();
 		int nextSeq = StringUtils.hasText(lastCustCode) ? Integer.parseInt(lastCustCode.substring(1)) + 1 : 1;
 		return "C%04d".formatted(nextSeq);
+	}
+
+	@Override
+	public void removeCustomer(String custCode) {
+		comCustomerMapper.deleteComCustomer(custCode);
 	}
 
 }

@@ -10,4 +10,8 @@ public interface IComCustomerService {
 
 	ComCustomer registerCustomer(ComCustomer request);
 
+	void updateCustomer(String custCode, ComCustomer request);
+
+	void removeCustomer(String custCode);
+
 }
