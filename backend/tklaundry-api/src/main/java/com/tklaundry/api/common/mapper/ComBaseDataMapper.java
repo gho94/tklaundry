@@ -14,4 +14,10 @@ public interface ComBaseDataMapper {
 
 	ComBaseData selectComBaseDataByCodeId(@Param("codeId") String codeId);
 
+	String selectLastCodeId();
+
+	String selectLastCodeIdByHeader(@Param("header") String header);
+
+	void insertComBaseData(ComBaseData code);
+
 }

@@ -25,4 +25,20 @@ class CodeApi {
 
     return Code.fromJson(body);
   }
+
+  Future<Code> registerCode({
+    required String pCodeId,
+    required String codeName,
+  }) async {
+    final body = await _client.post(
+      '/codes',
+      body: {
+        'pCodeId': pCodeId,
+        'codeName': codeName,
+      },
+      fallbackMessage: '코드 등록에 실패했습니다.',
+    );
+
+    return Code.fromJson(body);
+  }
 }

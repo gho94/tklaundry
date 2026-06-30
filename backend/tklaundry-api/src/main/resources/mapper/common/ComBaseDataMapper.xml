@@ -21,4 +21,33 @@
         WHERE CodeID = #{codeId}
     </select>
 
+    <select id="selectLastCodeId" resultType="string">
+        SELECT TOP 1 CodeID
+        FROM ComBaseData
+        ORDER BY CodeID DESC
+    </select>
+
+    <select id="selectLastCodeIdByHeader" resultType="string">
+        SELECT TOP 1 CodeID
+        FROM ComBaseData
+        WHERE CodeID LIKE #{header} + '%'
+        ORDER BY CodeID DESC
+    </select>
+
+    <insert id="insertComBaseData">
+        INSERT INTO ComBaseData (
+            CodeID,
+            PCodeID,
+            CodeName,
+            InsertUserID,
+            InsertDate
+        ) VALUES (
+            #{codeId},
+            #{pCodeId},
+            #{codeName},
+            #{insertUserId},
+            GETDATE()
+        )
+    </insert>
+
 </mapper>

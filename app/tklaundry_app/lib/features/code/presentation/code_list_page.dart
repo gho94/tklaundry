@@ -9,6 +9,7 @@ import '../domain/code.dart';
 import '../domain/code_tree.dart';
 import 'code_detail_panel.dart';
 import 'code_provider.dart';
+import 'code_register_dialog.dart';
 import 'code_tree_panel.dart';
 
 class CodeListPage extends ConsumerStatefulWidget {
@@ -71,6 +72,57 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
     return null;
   }
 
+  Code? _findCodeById(List<Code> codes, String codeId) {
+    for (final code in codes) {
+      if (code.codeId == codeId) return code;
+    }
+    return null;
+  }
+
+  Code? _findParent(List<Code> codes, Code child) {
+    final parentId = child.pCodeId;
+    return _findCodeById(codes, parentId) ??
+        _findCodeById(codes, parentId.trim());
+  }
+
+  void _expandAncestorsOf(String codeId, List<Code> codes) {
+    var current = _findCodeById(codes, codeId);
+    while (current != null && !Code.isRootParent(current.pCodeId)) {
+      final parent = _findParent(codes, current);
+      if (parent == null) break;
+      _expandedCodeIds.add(parent.codeId);
+      current = parent;
+    }
+  }
+
+  Future<void> _onRegistered(Code created, {String? expandParentCodeId}) async {
+    await ref.read(codeProvider.notifier).search();
+    if (!mounted) return;
+
+    final codes = ref.read(codeProvider).value;
+    if (codes == null) return;
+
+    setState(() {
+      _selectedCodeId = created.codeId;
+      if (expandParentCodeId != null) {
+        _expandAncestorsOf(expandParentCodeId, codes);
+        _expandedCodeIds.add(expandParentCodeId);
+      }
+    });
+  }
+
+  Future<void> _addTopLevel() async {
+    final created = await CodeRegisterDialog.showTopLevel(context);
+    if (created == null || !mounted) return;
+    await _onRegistered(created);
+  }
+
+  Future<void> _addChild(Code parent) async {
+    final created = await CodeRegisterDialog.showChild(context, parent);
+    if (created == null || !mounted) return;
+    await _onRegistered(created, expandParentCodeId: parent.codeId);
+  }
+
   @override
   Widget build(BuildContext context) {
     final codesAsync = ref.watch(codeProvider);
@@ -87,6 +139,13 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
                   ),
             ),
             const Spacer(),
+            TkPrimaryButton(
+              label: '최상위 추가',
+              variant: TkButtonVariant.outline,
+              icon: Icons.add,
+              onPressed: codesAsync.isLoading ? null : _addTopLevel,
+            ),
+            const SizedBox(width: AppSpacing.s2),
             TkPrimaryButton(
               label: '조회',
               variant: TkButtonVariant.outline,
@@ -131,6 +190,9 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
                     child: CodeDetailPanel(
                       selectedCode: selectedCode,
                       codes: codes,
+                      onAddChild: selectedCode == null
+                          ? null
+                          : () => _addChild(selectedCode),
                     ),
                   ),
                 ],

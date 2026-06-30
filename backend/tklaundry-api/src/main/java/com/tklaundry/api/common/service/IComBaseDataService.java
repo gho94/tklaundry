@@ -10,4 +10,6 @@ public interface IComBaseDataService {
 
 	ComBaseData getCode(String codeId);
 
+	ComBaseData registerCode(ComBaseData request);
+
 }

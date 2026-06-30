@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../shared/widgets/tk_primary_button.dart';
 import '../domain/code.dart';
 import '../domain/code_tree.dart';
 
@@ -10,10 +11,12 @@ class CodeDetailPanel extends StatelessWidget {
     super.key,
     required this.selectedCode,
     required this.codes,
+    this.onAddChild,
   });
 
   final Code? selectedCode;
   final List<Code> codes;
+  final VoidCallback? onAddChild;
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +77,17 @@ class CodeDetailPanel extends StatelessWidget {
                     ),
                   ),
           ),
+          if (selectedCode != null && onAddChild != null) ...[
+            const Divider(height: 1, color: AppColors.neutral200),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.s4),
+              child: TkPrimaryButton(
+                label: '하위 추가',
+                icon: Icons.add,
+                onPressed: onAddChild,
+              ),
+            ),
+          ],
         ],
       ),
     );
