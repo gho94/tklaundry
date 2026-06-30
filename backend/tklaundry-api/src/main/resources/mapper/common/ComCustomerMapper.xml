@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tklaundry.api.common.mapper.ComCustomerMapper">
+
+    <select id="selectComCustomerList" resultType="com.tklaundry.api.common.model.ComCustomer">
+        SELECT
+            CustCode     AS custCode,
+            CustName     AS custName,
+            AptCode      AS aptCode,
+            BuildingCode AS buildingCode,
+            FloorCode    AS floorCode,
+            RoomCode     AS roomCode,
+            CustPhone    AS custPhone
+        FROM ComCustomer
+        <where>
+            <if test="aptCode != null">
+                AptCode = #{aptCode}
+            </if>
+        </where>
+        ORDER BY AptCode, BuildingCode, FloorCode, RoomCode, CustName
+    </select>
+
+</mapper>
