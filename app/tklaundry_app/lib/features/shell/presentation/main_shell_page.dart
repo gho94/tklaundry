@@ -8,6 +8,7 @@ import '../../auth/presentation/auth_provider.dart';
 import '../../code/presentation/code_list_page.dart';
 import '../../customer/presentation/customer_list_page.dart';
 import '../../member/presentation/member_list_page.dart';
+import '../../product/presentation/product_list_page.dart';
 
 class MainShellPage extends ConsumerStatefulWidget {
   const MainShellPage({super.key});
@@ -163,6 +164,14 @@ class _ShellContent extends StatelessWidget {
         color: AppColors.neutral50,
         padding: const EdgeInsets.all(AppSpacing.s4),
         child: const CustomerListPage(),
+      );
+    }
+
+    if (selectedItemId == 'product') {
+      return Container(
+        color: AppColors.neutral50,
+        padding: const EdgeInsets.all(AppSpacing.s4),
+        child: const ProductListPage(),
       );
     }
 

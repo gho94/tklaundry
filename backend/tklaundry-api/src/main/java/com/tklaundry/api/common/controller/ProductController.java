@@ -1,0 +1,30 @@
+package com.tklaundry.api.common.controller;
+
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.tklaundry.api.common.model.ComProduct;
+import com.tklaundry.api.common.service.IComProductService;
+
+import lombok.RequiredArgsConstructor;
+
+@RestController
+@RequestMapping("/api/products")
+@RequiredArgsConstructor
+public class ProductController {
+
+	private final IComProductService comProductService;
+
+	@GetMapping
+	public ResponseEntity<List<ComProduct>> listProducts(
+			@RequestParam String processCode,
+			@RequestParam String groupCode) {
+		return ResponseEntity.ok(comProductService.listProducts(processCode, groupCode));
+	}
+
+}
