@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tklaundry.api.common.mapper.ComProductMapper">
+
+    <select id="selectComProductList" resultType="com.tklaundry.api.common.model.ComProduct">
+        SELECT
+            ProductCode AS productCode,
+            ProcessCode AS processCode,
+            GroupCode   AS groupCode,
+            ProductName AS productName,
+            Price       AS price
+        FROM ComProduct
+        WHERE ProcessCode = #{processCode}
+          AND GroupCode = #{groupCode}
+        ORDER BY ProductCode
+    </select>
+
+    <select id="selectLastProductCode" resultType="string">
+        SELECT TOP 1 ProductCode
+        FROM ComProduct
+        ORDER BY ProductCode DESC
+    </select>
+
+    <insert id="insertComProduct">
+        INSERT INTO ComProduct (
+            ProductCode,
+            ProcessCode,
+            GroupCode,
+            ProductName,
+            Price,
+            InsertDate,
+            InsertUserID
+        ) VALUES (
+            #{productCode},
+            #{processCode},
+            #{groupCode},
+            #{productName},
+            #{price},
+            GETDATE(),
+            #{insertUserId}
+        )
+    </insert>
+
+    <update id="updateComProduct">
+        UPDATE ComProduct
+        SET ProductName = #{productName},
+            Price = #{price},
+            UpdateUserID = #{updateUserId},
+            UpdateDate = GETDATE()
+        WHERE ProductCode = #{productCode}
+    </update>
+
+    <delete id="deleteComProduct">
+        DELETE FROM ComProduct
+        WHERE ProductCode = #{productCode}
+    </delete>
+
+</mapper>
