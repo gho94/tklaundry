@@ -32,7 +32,9 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
+      if (!mounted) return;
+      final codes = ref.read(codeProvider).value;
+      if (codes == null || codes.isEmpty) {
         ref.read(codeProvider.notifier).search();
       }
     });

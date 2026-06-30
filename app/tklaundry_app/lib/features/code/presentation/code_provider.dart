@@ -12,6 +12,14 @@ class CodeListNotifier extends AsyncNotifier<List<Code>> {
     return [];
   }
 
+  void setCodes(List<Code> codes) {
+    state = AsyncData(codes);
+  }
+
+  void clear() {
+    state = const AsyncData([]);
+  }
+
   Future<void> search() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(_codeApi.listCodes);

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_exception.dart';
+import '../../code/presentation/code_provider.dart';
 import '../data/auth_api.dart';
 import '../data/auth_local_storage.dart';
 import '../domain/auth_user.dart';
@@ -18,10 +19,12 @@ class AuthNotifier extends AsyncNotifier<AuthUser?> {
     if (credentials == null) return null;
 
     try {
-      return await _authApi.login(
+      final result = await _authApi.login(
         userId: credentials.userId,
         password: credentials.password,
       );
+      ref.read(codeProvider.notifier).setCodes(result.codes);
+      return result.user;
     } on ApiException {
       await _storage.clear();
       return null;
@@ -34,13 +37,14 @@ class AuthNotifier extends AsyncNotifier<AuthUser?> {
     required bool autoLogin,
   }) async {
     try {
-      final user = await _authApi.login(userId: userId, password: password);
+      final result = await _authApi.login(userId: userId, password: password);
+      ref.read(codeProvider.notifier).setCodes(result.codes);
       if (autoLogin) {
         await _storage.save(userId: userId, password: password);
       } else {
         await _storage.clear();
       }
-      state = AsyncData(user);
+      state = AsyncData(result.user);
     } on ApiException {
       state = const AsyncData(null);
       rethrow;
@@ -67,6 +71,7 @@ class AuthNotifier extends AsyncNotifier<AuthUser?> {
     }
 
     await _storage.clear();
+    ref.read(codeProvider.notifier).clear();
     state = const AsyncData(null);
   }
 }

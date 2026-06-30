@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import com.tklaundry.api.common.CommonInfo;
 import com.tklaundry.api.common.mapper.ComMemberMapper;
 import com.tklaundry.api.common.model.ComMember;
+import com.tklaundry.api.common.service.IComBaseDataService;
 import com.tklaundry.api.common.web.ApiErrorCode;
 import com.tklaundry.api.common.web.ApiException;
 
@@ -19,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ComMemberService implements IComMemberService {
 
 	private final ComMemberMapper comMemberMapper;
+	private final IComBaseDataService comBaseDataService;
 	private final CommonInfo commonInfo;
 
 	@Override
@@ -29,7 +31,7 @@ public class ComMemberService implements IComMemberService {
 		}
 
 		comMemberMapper.updateComMemberLoginDate(member.getUserId());
-		commonInfo.bindLogin(member);
+		commonInfo.bindLogin(member, comBaseDataService.listCodes());
 
 		return commonInfo;
 	}
@@ -73,7 +75,7 @@ public class ComMemberService implements IComMemberService {
 
 		ComMember created = comMemberMapper.selectComMemberByUserId(request.getUserId());
 		if (loginUser == null) {
-			commonInfo.bindLogin(created);
+			commonInfo.bindLogin(created, comBaseDataService.listCodes());
 			comMemberMapper.updateComMemberLoginDate(created.getUserId());
 		}
 

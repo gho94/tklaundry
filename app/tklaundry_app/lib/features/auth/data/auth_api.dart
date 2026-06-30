@@ -1,13 +1,24 @@
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
+import '../../code/domain/code.dart';
 import '../domain/auth_user.dart';
+
+class LoginResult {
+  const LoginResult({
+    required this.user,
+    required this.codes,
+  });
+
+  final AuthUser user;
+  final List<Code> codes;
+}
 
 class AuthApi {
   AuthApi({ApiClient? client}) : _client = client ?? ApiClient();
 
   final ApiClient _client;
 
-  Future<AuthUser> login({
+  Future<LoginResult> login({
     required String userId,
     required String password,
   }) async {
@@ -22,9 +33,17 @@ class AuthApi {
       throw ApiException(message: '로그인 응답 형식이 올바르지 않습니다.');
     }
 
-    return AuthUser(
-      userId: user['userId'] as String,
-      userName: user['userName'] as String,
+    final codesBody = body['codes'] as List<dynamic>? ?? const [];
+    final codes = codesBody
+        .map((item) => Code.fromJson(item as Map<String, dynamic>))
+        .toList();
+
+    return LoginResult(
+      user: AuthUser(
+        userId: user['userId'] as String,
+        userName: user['userName'] as String,
+      ),
+      codes: codes,
     );
   }
 
