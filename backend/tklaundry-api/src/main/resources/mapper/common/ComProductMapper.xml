@@ -16,4 +16,30 @@
         ORDER BY ProductCode
     </select>
 
+    <select id="selectLastProductCode" resultType="string">
+        SELECT TOP 1 ProductCode
+        FROM ComProduct
+        ORDER BY ProductCode DESC
+    </select>
+
+    <insert id="insertComProduct">
+        INSERT INTO ComProduct (
+            ProductCode,
+            ProcessCode,
+            GroupCode,
+            ProductName,
+            Price,
+            InsertDate,
+            InsertUserID
+        ) VALUES (
+            #{productCode},
+            #{processCode},
+            #{groupCode},
+            #{productName},
+            #{price},
+            GETDATE(),
+            #{insertUserId}
+        )
+    </insert>
+
 </mapper>

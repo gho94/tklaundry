@@ -8,4 +8,6 @@ public interface IComProductService {
 
 	List<ComProduct> listProducts(String processCode, String groupCode);
 
+	ComProduct registerProduct(ComProduct request);
+
 }

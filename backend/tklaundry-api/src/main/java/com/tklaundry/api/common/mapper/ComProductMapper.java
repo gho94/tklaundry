@@ -14,4 +14,8 @@ public interface ComProductMapper {
 			@Param("processCode") String processCode,
 			@Param("groupCode") String groupCode);
 
+	String selectLastProductCode();
+
+	void insertComProduct(ComProduct product);
+
 }

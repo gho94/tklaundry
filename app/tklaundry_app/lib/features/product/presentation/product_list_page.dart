@@ -10,6 +10,7 @@ import '../../code/domain/code.dart';
 import '../../code/presentation/code_provider.dart';
 import '../domain/product.dart';
 import 'product_provider.dart';
+import 'product_register_dialog.dart';
 
 class ProductListPage extends ConsumerStatefulWidget {
   const ProductListPage({super.key});
@@ -130,6 +131,15 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
     return price.toString();
   }
 
+  String _lookupCodeName(List<Code> codes, String codeId) {
+    for (final code in codes) {
+      if (code.codeId.trim() == codeId.trim()) {
+        return code.codeName;
+      }
+    }
+    return codeId;
+  }
+
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(productListProvider);
@@ -191,6 +201,29 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
               ),
             ),
             const Spacer(),
+            TkPrimaryButton(
+              label: '등록',
+              variant: TkButtonVariant.outline,
+              icon: Icons.add_outlined,
+              onPressed: !canSearch
+                  ? null
+                  : () async {
+                      final created = await ProductRegisterDialog.showCreate(
+                        context,
+                        processCode: effectiveProcessCode,
+                        groupCode: effectiveGroupCode,
+                        processName:
+                            _lookupCodeName(codes, effectiveProcessCode),
+                        groupName: _lookupCodeName(codes, effectiveGroupCode),
+                      );
+                      if (!mounted || created != true) return;
+                      await _search(
+                        processCode: effectiveProcessCode,
+                        groupCode: effectiveGroupCode,
+                      );
+                    },
+            ),
+            const SizedBox(width: 8),
             TkPrimaryButton(
               label: '조회',
               variant: TkButtonVariant.outline,

@@ -23,4 +23,24 @@ class ProductApi {
         .map((item) => Product.fromJson(item as Map<String, dynamic>))
         .toList();
   }
+
+  Future<Product> registerProduct({
+    required String processCode,
+    required String groupCode,
+    required String productName,
+    required int price,
+  }) async {
+    final body = await _client.post(
+      '/products',
+      body: {
+        'processCode': processCode,
+        'groupCode': groupCode,
+        'productName': productName,
+        'price': price,
+      },
+      fallbackMessage: '제품 등록에 실패했습니다.',
+    );
+
+    return Product.fromJson(body);
+  }
 }
