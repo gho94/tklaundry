@@ -148,7 +148,8 @@ class _TkComboBoxState<T> extends State<TkComboBox<T>> {
     final selected = _selectedItem;
     final overlay = _overlay;
     final isOpen = overlay?.isShowing ?? false;
-    final displayText = selected?.label ?? '';
+    final displayText = selected?.label ??
+        (widget.showAllOption && widget.value == null ? '전체' : '');
 
     return tkDropdownAnchorField(
       layerLink: overlay?.layerLink ?? LayerLink(),

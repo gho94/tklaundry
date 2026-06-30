@@ -56,12 +56,12 @@ D:/projects/
 
 ```
 0단계  프로젝트 뼈대 · 공통 위젯 · 로그  (완료)
-1단계  회원(완료) → 공통코드(완료) → 고객 → 제품
+1단계  회원(완료) → 공통코드(완료) → 고객(완료) → 제품
 2단계  접수 → 출고 → 매출
 3단계  일계표·설정 등 (나중에)
 ```
 
-**1단계 진행**: ① 회원 · ② 공통코드 **완료** · ③ 고객 · ④ 제품 **다음**
+**1단계 진행**: ① 회원 · ② 공통코드 · ③ 고객 **완료** · ④ 제품 **다음**
 
 ---
 
@@ -72,6 +72,7 @@ D:/projects/
 - **Flutter**: Riverpod · 단순 CRUD는 UseCase 생략
 - **로그인 후**: `authProvider` + login `codes` → 전역 `codeProvider` · 자동 로그인(`shared_preferences`)
 - **공통코드**: flat 캐시 · CRUD 후 `codeProvider.search()` · 단건 API 없음
+- **고객**: 아파트 필터 목록 · 단건 GET 없음(그리드 행으로 수정) · 등록·수정·삭제 API
 - **설정**: `application.yml` 하나 (profile 안 씀, `localhost`)
 - **로그**: 오류 JSON traceId · 파일 롤링 — [02_아키텍처.md](docs/02_아키텍처.md)
 - **디자인**: [06_디자인_시스템.md](docs/06_디자인_시스템.md) · `shared/widgets/Tk*`

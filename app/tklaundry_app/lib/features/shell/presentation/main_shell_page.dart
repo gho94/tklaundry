@@ -6,6 +6,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../shared/widgets/tk_sidebar.dart';
 import '../../auth/presentation/auth_provider.dart';
 import '../../code/presentation/code_list_page.dart';
+import '../../customer/presentation/customer_list_page.dart';
 import '../../member/presentation/member_list_page.dart';
 
 class MainShellPage extends ConsumerStatefulWidget {
@@ -154,6 +155,14 @@ class _ShellContent extends StatelessWidget {
         color: AppColors.neutral50,
         padding: const EdgeInsets.all(AppSpacing.s4),
         child: const MemberListPage(),
+      );
+    }
+
+    if (selectedItemId == 'customer') {
+      return Container(
+        color: AppColors.neutral50,
+        padding: const EdgeInsets.all(AppSpacing.s4),
+        child: const CustomerListPage(),
       );
     }
 
