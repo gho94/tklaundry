@@ -19,9 +19,9 @@ class MemberListPage extends ConsumerStatefulWidget {
 
 class _MemberListPageState extends ConsumerState<MemberListPage> {
   static const _columns = [
-    TkGridColumn(label: '아이디', width: 140),
+    TkGridColumn(label: '아이디'),
     TkGridColumn(label: '이름'),
-    TkGridColumn(label: '사용여부', width: 100, align: TextAlign.center),
+    TkGridColumn(label: '사용여부', align: TextAlign.center),
   ];
 
   int? _selectedRowIndex;
