@@ -18,8 +18,6 @@ public interface ComMemberMapper {
 
 	int countComMemberByUserId(@Param("userId") String userId);
 
-	ComMember selectComMemberByUserId(@Param("userId") String userId);
-
 	void insertComMember(ComMember member);
 
 	void updateComMember(ComMember member);

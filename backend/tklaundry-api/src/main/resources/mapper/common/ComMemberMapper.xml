@@ -34,15 +34,6 @@
         WHERE UserID = #{userId}
     </select>
 
-    <select id="selectComMemberByUserId" resultType="com.tklaundry.api.common.model.ComMember">
-        SELECT
-            UserID   AS userId,
-            UserName AS userName,
-            UseYn    AS useYn
-        FROM ComMember
-        WHERE UserID = #{userId}
-    </select>
-
     <insert id="insertComMember">
         INSERT INTO ComMember (
             UserID,

@@ -17,8 +17,6 @@ public interface IComMemberService {
 
 	ComMember register(ComMember request);
 
-	ComMember getMember(String userId);
-
 	void updateMember(String userId, ComMember request);
 
 	void removeMember(String userId);

@@ -40,8 +40,7 @@ class _MemberListPageState extends ConsumerState<MemberListPage> {
   }
 
   Future<void> _openEditDialog(Member member) async {
-    final updated =
-        await MemberRegisterDialog.showEdit(context, member.userId);
+    final updated = await MemberRegisterDialog.showEdit(context, member);
     if (updated != true || !mounted) return;
 
     await ref.read(memberListProvider.notifier).search();
