@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../shared/widgets/tk_async_error_body.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
 import '../data/code_api.dart';
 import '../domain/code.dart';
@@ -210,7 +210,10 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
     }
 
     if (_searchError != null && codes.isEmpty) {
-      return _ErrorBody(error: _searchError!);
+      return TkAsyncErrorBody(
+        error: _searchError!,
+        fallbackMessage: '코드 목록을 불러오지 못했습니다.',
+      );
     }
 
     final roots = buildCodeTree(codes);
@@ -292,47 +295,6 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
         const SizedBox(height: 16),
         Expanded(child: _buildBody(codes)),
       ],
-    );
-  }
-}
-
-class _ErrorBody extends StatelessWidget {
-  const _ErrorBody({required this.error});
-
-  final Object error;
-
-  @override
-  Widget build(BuildContext context) {
-    final apiError = error is ApiException ? error as ApiException : null;
-    final message = apiError?.message ?? '코드 목록을 불러오지 못했습니다.';
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.error,
-                    height: 1.4,
-                  ),
-            ),
-            if (apiError?.traceId != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                'traceId: ${apiError!.traceId}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                      fontSize: 11,
-                    ),
-              ),
-            ],
-          ],
-        ),
-      ),
     );
   }
 }

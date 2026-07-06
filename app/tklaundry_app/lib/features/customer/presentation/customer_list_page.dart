@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/tk_async_error_body.dart';
 import '../../../shared/widgets/tk_combo_box.dart';
 import '../../../shared/widgets/tk_grid_table.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
@@ -207,7 +208,10 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                   : customersAsync.when(
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
-                    error: (error, _) => _ErrorBody(error: error),
+                    error: (error, _) => TkAsyncErrorBody(
+                      error: error,
+                      fallbackMessage: '고객 목록을 불러오지 못했습니다.',
+                    ),
                     data: (customers) {
                       if (_selectedRowIndex != null &&
                           _selectedRowIndex! >= customers.length) {
@@ -253,46 +257,5 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
       Text(_lookupCodeName(codeNames, customer.roomCode)),
       Text(customer.custPhone),
     ];
-  }
-}
-
-class _ErrorBody extends StatelessWidget {
-  const _ErrorBody({required this.error});
-
-  final Object error;
-
-  @override
-  Widget build(BuildContext context) {
-    final apiError = error is ApiException ? error as ApiException : null;
-    final message = apiError?.message ?? '고객 목록을 불러오지 못했습니다.';
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.error,
-                    height: 1.4,
-                  ),
-            ),
-            if (apiError?.traceId != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                'traceId: ${apiError!.traceId}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                      fontSize: 11,
-                    ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
   }
 }
