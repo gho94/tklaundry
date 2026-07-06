@@ -125,8 +125,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
   @override
   Widget build(BuildContext context) {
     final customersAsync = ref.watch(customerListProvider);
-    final codesAsync = ref.watch(codeProvider);
-    final codes = codesAsync.asData?.value ?? const <Code>[];
+    final codes = ref.watch(codeProvider);
     final codeNames = _codeNameMap(codes);
     final aptItems = _aptComboItems(codes);
     _ensureInitialSearch(aptItems);
@@ -203,15 +202,9 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: codesAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => _ErrorBody(error: error),
-                data: (_) {
-                  if (aptItems.isEmpty) {
-                    return const Center(child: Text('아파트 코드가 없습니다.'));
-                  }
-
-                  return customersAsync.when(
+              child: aptItems.isEmpty
+                  ? const Center(child: Text('아파트 코드가 없습니다.'))
+                  : customersAsync.when(
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
                     error: (error, _) => _ErrorBody(error: error),
@@ -243,9 +236,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                         },
                       );
                     },
-                  );
-                },
-              ),
+                  ),
             ),
           ),
         ),

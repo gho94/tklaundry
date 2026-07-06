@@ -26,6 +26,8 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
   String? _selectedCodeId;
   bool _defaultExpansionApplied = false;
   bool _isDeleting = false;
+  bool _isSearching = false;
+  Object? _searchError;
   final _codeApi = CodeApi();
 
   @override
@@ -33,11 +35,25 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final codes = ref.read(codeProvider).value;
-      if (codes == null || codes.isEmpty) {
-        ref.read(codeProvider.notifier).search();
+      if (ref.read(codeProvider).isEmpty) {
+        _search();
       }
     });
+  }
+
+  Future<void> _search() async {
+    setState(() {
+      _isSearching = true;
+      _searchError = null;
+    });
+
+    try {
+      await ref.read(codeProvider.notifier).search();
+    } catch (error) {
+      if (mounted) setState(() => _searchError = error);
+    } finally {
+      if (mounted) setState(() => _isSearching = false);
+    }
   }
 
   void _applyDefaultExpansion(List<CodeTreeNode> roots) {
@@ -102,11 +118,10 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
   }
 
   Future<void> _onRegistered(Code created, {String? expandParentCodeId}) async {
-    await ref.read(codeProvider.notifier).search();
+    await _search();
     if (!mounted) return;
 
-    final codes = ref.read(codeProvider).value;
-    if (codes == null) return;
+    final codes = ref.read(codeProvider);
 
     setState(() {
       _selectedCodeId = created.codeId;
@@ -133,7 +148,7 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
     final updated = await CodeEditDialog.show(context, code);
     if (updated != true || !mounted) return;
 
-    await ref.read(codeProvider.notifier).search();
+    await _search();
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -170,7 +185,7 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
       await _codeApi.deleteCode(code.codeId);
       if (!mounted) return;
 
-      await ref.read(codeProvider.notifier).search();
+      await _search();
       if (!mounted) return;
 
       setState(() => _selectedCodeId = null);
@@ -189,9 +204,62 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
     }
   }
 
+  Widget _buildBody(List<Code> codes) {
+    if (_isSearching && codes.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_searchError != null && codes.isEmpty) {
+      return _ErrorBody(error: _searchError!);
+    }
+
+    final roots = buildCodeTree(codes);
+    _applyDefaultExpansion(roots);
+    final rows = flattenCodeTree(
+      roots,
+      expandedCodeIds: _expandedCodeIds,
+    );
+    final selectedCode = _findSelectedCode(codes);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          flex: 2,
+          child: CodeTreePanel(
+            rows: rows,
+            expandedCodeIds: _expandedCodeIds,
+            selectedCodeId: _selectedCodeId,
+            onToggleExpanded: _toggleExpanded,
+            onSelect: _selectCode,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.s3),
+        Expanded(
+          flex: 3,
+          child: CodeDetailPanel(
+            selectedCode: selectedCode,
+            codes: codes,
+            isDeleting: _isDeleting,
+            onEdit: selectedCode == null || _isDeleting
+                ? null
+                : () => _editSelected(selectedCode),
+            onDelete: selectedCode == null || _isDeleting
+                ? null
+                : () => _deleteSelected(selectedCode),
+            onAddChild: selectedCode == null || _isDeleting
+                ? null
+                : () => _addChild(selectedCode),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final codesAsync = ref.watch(codeProvider);
+    final codes = ref.watch(codeProvider);
+    final isBusy = _isSearching || _isDeleting;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -209,70 +277,20 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
               label: '최상위 추가',
               variant: TkButtonVariant.outline,
               icon: Icons.add,
-              onPressed: codesAsync.isLoading || _isDeleting ? null : _addTopLevel,
+              onPressed: isBusy ? null : _addTopLevel,
             ),
             const SizedBox(width: AppSpacing.s2),
             TkPrimaryButton(
               label: '조회',
               variant: TkButtonVariant.outline,
               icon: Icons.search,
-              isLoading: codesAsync.isLoading,
-              onPressed: codesAsync.isLoading || _isDeleting
-                  ? null
-                  : () => ref.read(codeProvider.notifier).search(),
+              isLoading: _isSearching,
+              onPressed: isBusy ? null : _search,
             ),
           ],
         ),
         const SizedBox(height: 16),
-        Expanded(
-          child: codesAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => _ErrorBody(error: error),
-            data: (codes) {
-              final roots = buildCodeTree(codes);
-              _applyDefaultExpansion(roots);
-              final rows = flattenCodeTree(
-                roots,
-                expandedCodeIds: _expandedCodeIds,
-              );
-              final selectedCode = _findSelectedCode(codes);
-
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: CodeTreePanel(
-                      rows: rows,
-                      expandedCodeIds: _expandedCodeIds,
-                      selectedCodeId: _selectedCodeId,
-                      onToggleExpanded: _toggleExpanded,
-                      onSelect: _selectCode,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.s3),
-                  Expanded(
-                    flex: 3,
-                    child: CodeDetailPanel(
-                      selectedCode: selectedCode,
-                      codes: codes,
-                      isDeleting: _isDeleting,
-                      onEdit: selectedCode == null || _isDeleting
-                          ? null
-                          : () => _editSelected(selectedCode),
-                      onDelete: selectedCode == null || _isDeleting
-                          ? null
-                          : () => _deleteSelected(selectedCode),
-                      onAddChild: selectedCode == null || _isDeleting
-                          ? null
-                          : () => _addChild(selectedCode),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
+        Expanded(child: _buildBody(codes)),
       ],
     );
   }

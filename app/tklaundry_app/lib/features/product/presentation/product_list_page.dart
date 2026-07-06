@@ -194,8 +194,7 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(productListProvider);
-    final codesAsync = ref.watch(codeProvider);
-    final codes = codesAsync.asData?.value ?? const <Code>[];
+    final codes = ref.watch(codeProvider);
     final processItems = _processComboItems(codes);
     final effectiveProcessCode = _selectedProcessCode ??
         (processItems.isNotEmpty ? processItems.first.value : null);
@@ -316,18 +315,11 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: codesAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => _ErrorBody(error: error),
-                data: (_) {
-                  if (processItems.isEmpty) {
-                    return const Center(child: Text('공정 코드가 없습니다.'));
-                  }
-                  if (groupItems.isEmpty) {
-                    return const Center(child: Text('그룹 코드가 없습니다.'));
-                  }
-
-                  return productsAsync.when(
+              child: processItems.isEmpty
+                  ? const Center(child: Text('공정 코드가 없습니다.'))
+                  : groupItems.isEmpty
+                      ? const Center(child: Text('그룹 코드가 없습니다.'))
+                      : productsAsync.when(
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
                     error: (error, _) => _ErrorBody(error: error),
@@ -370,9 +362,7 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
                         },
                       );
                     },
-                  );
-                },
-              ),
+                  ),
             ),
           ),
         ),

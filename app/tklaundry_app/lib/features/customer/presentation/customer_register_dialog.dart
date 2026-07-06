@@ -272,27 +272,13 @@ class _CustomerRegisterDialogState
 
   @override
   Widget build(BuildContext context) {
-    final codesAsync = ref.watch(codeProvider);
+    final codes = ref.watch(codeProvider);
 
     return AlertDialog(
       title: Text(_isEdit ? '고객 수정' : '고객 등록'),
       content: SizedBox(
         width: 420,
-        child: codesAsync.when(
-          loading: () => const Padding(
-            padding: EdgeInsets.symmetric(vertical: 32),
-            child: Center(child: CircularProgressIndicator()),
-          ),
-          error: (error, _) => Text(
-            error is ApiException
-                ? error.message
-                : '코드 정보를 불러오지 못했습니다.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.error,
-                ),
-          ),
-          data: (codes) => _buildForm(codes),
-        ),
+        child: _buildForm(codes),
       ),
       actions: [
         TextButton(
@@ -302,7 +288,7 @@ class _CustomerRegisterDialogState
         TkPrimaryButton(
           label: _isEdit ? '저장' : '등록',
           isLoading: _isSubmitting,
-          onPressed: _isSubmitting || codesAsync.isLoading ? null : _submit,
+          onPressed: _isSubmitting ? null : _submit,
         ),
       ],
     );
