@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/code_constants.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../shared/utils/tk_feedback.dart';
 import '../../../shared/widgets/tk_async_error_body.dart';
 import '../../../shared/widgets/tk_confirm_dialog.dart';
 import '../../../shared/widgets/tk_combo_box.dart';
+import '../../../shared/widgets/tk_grid_panel.dart';
 import '../../../shared/widgets/tk_grid_table.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
 import '../../code/domain/code.dart';
@@ -319,19 +319,12 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
         ),
         const SizedBox(height: 16),
         Expanded(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: processItems.isEmpty
-                  ? const Center(child: Text('공정 코드가 없습니다.'))
-                  : groupItems.isEmpty
-                      ? const Center(child: Text('그룹 코드가 없습니다.'))
-                      : productsAsync.when(
+          child: TkGridPanel(
+            child: processItems.isEmpty
+                ? const Center(child: Text('공정 코드가 없습니다.'))
+                : groupItems.isEmpty
+                    ? const Center(child: Text('그룹 코드가 없습니다.'))
+                    : productsAsync.when(
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
                     error: (error, _) => TkAsyncErrorBody(
@@ -364,7 +357,6 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
                       );
                     },
                   ),
-            ),
           ),
         ),
       ],

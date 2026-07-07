@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/utils/tk_feedback.dart';
 import '../../../shared/widgets/tk_async_error_body.dart';
 import '../../../shared/widgets/tk_confirm_dialog.dart';
+import '../../../shared/widgets/tk_grid_panel.dart';
 import '../../../shared/widgets/tk_grid_table.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
 import '../data/member_api.dart';
@@ -149,50 +150,42 @@ class _MemberListPageState extends ConsumerState<MemberListPage> {
         ),
         const SizedBox(height: 16),
         Expanded(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: membersAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => TkAsyncErrorBody(
-                  error: error,
-                  fallbackMessage: '회원 목록을 불러오지 못했습니다.',
-                ),
-                data: (members) {
-                  if (_selectedRowIndex != null &&
-                      _selectedRowIndex! >= members.length) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (mounted) setState(() => _selectedRowIndex = null);
-                    });
-                  }
-
-                  return TkGridTable(
-                    columns: _columns,
-                    selectedRowIndex: _selectedRowIndex,
-                    onRowTap: (index) => setState(() => _selectedRowIndex = index),
-                    rows: [
-                      for (final member in members)
-                        [
-                          Text(member.userId),
-                          Text(member.userName),
-                          Text(
-                            member.useYn == 'Y' ? 'Y' : 'N',
-                            style: TextStyle(
-                              color: member.useYn == 'Y'
-                                  ? AppColors.textPrimary
-                                  : AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                    ],
-                  );
-                },
+          child: TkGridPanel(
+            child: membersAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => TkAsyncErrorBody(
+                error: error,
+                fallbackMessage: '회원 목록을 불러오지 못했습니다.',
               ),
+              data: (members) {
+                if (_selectedRowIndex != null &&
+                    _selectedRowIndex! >= members.length) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) setState(() => _selectedRowIndex = null);
+                  });
+                }
+
+                return TkGridTable(
+                  columns: _columns,
+                  selectedRowIndex: _selectedRowIndex,
+                  onRowTap: (index) => setState(() => _selectedRowIndex = index),
+                  rows: [
+                    for (final member in members)
+                      [
+                        Text(member.userId),
+                        Text(member.userName),
+                        Text(
+                          member.useYn == 'Y' ? 'Y' : 'N',
+                          style: TextStyle(
+                            color: member.useYn == 'Y'
+                                ? AppColors.textPrimary
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                  ],
+                );
+              },
             ),
           ),
         ),
