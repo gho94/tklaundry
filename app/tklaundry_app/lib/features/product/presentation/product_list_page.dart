@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/code_constants.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/tk_async_error_body.dart';
@@ -22,8 +23,6 @@ class ProductListPage extends ConsumerStatefulWidget {
 }
 
 class _ProductListPageState extends ConsumerState<ProductListPage> {
-  static const _processParentCodeId = 'B10002';
-
   static const _columns = [
     TkGridColumn(label: '제품명'),
     TkGridColumn(
@@ -43,7 +42,7 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
 
   List<TkComboItem<String>> _processComboItems(List<Code> codes) {
     final processes = codes
-        .where((code) => code.pCodeId.trim() == _processParentCodeId)
+        .where((code) => code.pCodeId.trim() == CodeConstants.productProcess)
         .toList()
       ..sort((a, b) => a.codeId.compareTo(b.codeId));
 

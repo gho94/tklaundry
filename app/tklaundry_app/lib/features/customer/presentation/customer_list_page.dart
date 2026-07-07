@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/code_constants.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/tk_async_error_body.dart';
@@ -31,8 +32,6 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     TkGridColumn(label: '전화번호'),
   ];
 
-  static const _customerManageCodeId = 'A10001';
-
   String? _selectedAptCode;
   int? _selectedRowIndex;
   bool _initialized = false;
@@ -41,7 +40,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
 
   List<TkComboItem<String>> _aptComboItems(List<Code> codes) {
     final apartments = codes
-        .where((code) => code.pCodeId.trim() == _customerManageCodeId)
+        .where((code) => code.pCodeId.trim() == CodeConstants.customerApt)
         .toList()
       ..sort((a, b) => a.codeId.compareTo(b.codeId));
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/code_constants.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/tk_combo_box.dart';
@@ -41,10 +42,6 @@ class CustomerRegisterDialog extends ConsumerStatefulWidget {
 
 class _CustomerRegisterDialogState
     extends ConsumerState<CustomerRegisterDialog> {
-  static const _aptCategoryCodeId = 'A10001';
-  static const _floorCategoryCodeId = 'A10002';
-  static const _roomCategoryCodeId = 'A10003';
-
   final _customerApi = CustomerApi();
   final _custNameController = TextEditingController();
   final _custPhoneController = TextEditingController();
@@ -92,7 +89,7 @@ class _CustomerRegisterDialogState
 
   List<TkComboItem<String>> _aptItems(List<Code> codes) {
     return _comboItems(
-      codes.where((code) => code.pCodeId.trim() == _aptCategoryCodeId),
+      codes.where((code) => code.pCodeId.trim() == CodeConstants.customerApt),
     );
   }
 
@@ -106,13 +103,13 @@ class _CustomerRegisterDialogState
 
   List<TkComboItem<String>> _floorItems(List<Code> codes) {
     return _comboItems(
-      codes.where((code) => code.pCodeId.trim() == _floorCategoryCodeId),
+      codes.where((code) => code.pCodeId.trim() == CodeConstants.customerFloor),
     );
   }
 
   List<TkComboItem<String>> _roomItems(List<Code> codes) {
     return _comboItems(
-      codes.where((code) => code.pCodeId.trim() == _roomCategoryCodeId),
+      codes.where((code) => code.pCodeId.trim() == CodeConstants.customerRoom),
     );
   }
 
