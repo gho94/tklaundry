@@ -7,12 +7,27 @@ class TkGridColumn {
   const TkGridColumn({
     required this.label,
     this.width,
+    this.flexRatio,
     this.numeric = false,
     this.align = TextAlign.start,
-  });
+  }) : assert(
+          width == null || flexRatio == null,
+          'width(고정 px)와 flexRatio(비율)는 동시에 지정할 수 없습니다.',
+        ),
+        assert(
+          flexRatio == null || (flexRatio > 0 && flexRatio <= 1),
+          'flexRatio는 0 초과 ~ 1 이하여야 합니다.',
+        );
 
   final String label;
+
+  /// 고정 너비(px). [flexRatio]와 함께 쓸 수 없음.
   final double? width;
+
+  /// 테이블 전체 너비 대비 비율 (0~1). 예: `0.3` = 30%.
+  /// 지정하지 않은 컬럼은 남은 너비를 균등 분배.
+  final double? flexRatio;
+
   final bool numeric;
   final TextAlign align;
 }
@@ -115,16 +130,30 @@ class TkGridTable extends StatelessWidget {
   }
 
   List<double> _buildColumnWidths(double totalWidth) {
-    final fixedTotal = columns
-        .where((column) => column.width != null)
-        .fold(0.0, (sum, column) => sum + column.width!);
-    final flexibleCount = columns.where((column) => column.width == null).length;
-    final remaining = (totalWidth - fixedTotal).clamp(0, double.infinity);
-    final equalWidth = flexibleCount == 0 ? 0.0 : remaining / flexibleCount;
+    var remaining = totalWidth;
+
+    for (final column in columns) {
+      if (column.width != null) {
+        remaining -= column.width!;
+      } else if (column.flexRatio != null) {
+        remaining -= totalWidth * column.flexRatio!;
+      }
+    }
+
+    final equalShareCount =
+        columns.where((column) => column.width == null && column.flexRatio == null).length;
+    final equalWidth = equalShareCount == 0
+        ? 0.0
+        : (remaining / equalShareCount).clamp(0.0, double.infinity).toDouble();
 
     return [
       for (final column in columns)
-        column.width ?? equalWidth,
+        if (column.width != null)
+          column.width!
+        else if (column.flexRatio != null)
+          totalWidth * column.flexRatio!
+        else
+          equalWidth,
     ];
   }
 }

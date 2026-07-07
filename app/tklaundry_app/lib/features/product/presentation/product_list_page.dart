@@ -29,7 +29,7 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
     TkGridColumn(label: '제품명'),
     TkGridColumn(
       label: '단가',
-      width: 120,
+      flexRatio: 0.3,
       numeric: true,
       align: TextAlign.end,
     ),
