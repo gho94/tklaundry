@@ -6,6 +6,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/utils/tk_feedback.dart';
 import '../../../shared/widgets/tk_async_error_body.dart';
+import '../../../shared/widgets/tk_confirm_dialog.dart';
 import '../../../shared/widgets/tk_combo_box.dart';
 import '../../../shared/widgets/tk_grid_table.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
@@ -95,25 +96,13 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
   }
 
   Future<void> _deleteSelected(Customer customer) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('고객 삭제'),
-        content: Text('\'${customer.custName}\' 고객을 삭제하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('삭제'),
-          ),
-        ],
-      ),
+    final confirmed = await showTkConfirmDialog(
+      context,
+      title: '고객 삭제',
+      message: '\'${customer.custName}\' 고객을 삭제하시겠습니까?',
     );
 
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
 
     setState(() => _isDeleting = true);
 

@@ -5,6 +5,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/utils/tk_feedback.dart';
 import '../../../shared/widgets/tk_async_error_body.dart';
+import '../../../shared/widgets/tk_confirm_dialog.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
 import '../data/code_api.dart';
 import '../domain/code.dart';
@@ -156,27 +157,14 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
   }
 
   Future<void> _deleteSelected(Code code) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('코드 삭제'),
-        content: Text(
+    final confirmed = await showTkConfirmDialog(
+      context,
+      title: '코드 삭제',
+      message:
           '\'${code.codeName}\' (${code.codeId}) 코드와\n하위 코드를 모두 삭제하시겠습니까?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('삭제'),
-          ),
-        ],
-      ),
     );
 
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
 
     setState(() => _isDeleting = true);
 

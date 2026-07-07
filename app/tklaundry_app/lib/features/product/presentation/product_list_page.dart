@@ -6,6 +6,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/utils/tk_feedback.dart';
 import '../../../shared/widgets/tk_async_error_body.dart';
+import '../../../shared/widgets/tk_confirm_dialog.dart';
 import '../../../shared/widgets/tk_combo_box.dart';
 import '../../../shared/widgets/tk_grid_table.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
@@ -181,25 +182,13 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
   }
 
   Future<void> _deleteSelected(Product product) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('제품 삭제'),
-        content: Text('\'${product.productName}\' 제품을 삭제하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('삭제'),
-          ),
-        ],
-      ),
+    final confirmed = await showTkConfirmDialog(
+      context,
+      title: '제품 삭제',
+      message: '\'${product.productName}\' 제품을 삭제하시겠습니까?',
     );
 
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
 
     setState(() => _isDeleting = true);
 
