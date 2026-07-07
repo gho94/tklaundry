@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/code_constants.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/utils/tk_feedback.dart';
 import '../../../shared/widgets/tk_async_error_body.dart';
 import '../../../shared/widgets/tk_combo_box.dart';
 import '../../../shared/widgets/tk_grid_table.dart';
@@ -77,6 +78,22 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     });
   }
 
+  Future<void> _openRegisterDialog() async {
+    final created = await CustomerRegisterDialog.showCreate(context);
+    if (!mounted || created != true) return;
+    await _search(_selectedAptCode);
+    if (!mounted) return;
+    context.showTkMessage('고객이 등록되었습니다.');
+  }
+
+  Future<void> _openEditDialog(Customer customer) async {
+    final updated = await CustomerRegisterDialog.showEdit(context, customer);
+    if (!mounted || updated != true) return;
+    await _search(_selectedAptCode);
+    if (!mounted) return;
+    context.showTkMessage('고객 정보가 수정되었습니다.');
+  }
+
   Future<void> _deleteSelected(Customer customer) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -107,14 +124,10 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
       await _search(_selectedAptCode);
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('고객이 삭제되었습니다.')),
-      );
+      context.showTkMessage('고객이 삭제되었습니다.');
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      context.showTkApiError(error);
     } finally {
       if (mounted) {
         setState(() => _isDeleting = false);
@@ -157,11 +170,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
               label: '등록',
               variant: TkButtonVariant.outline,
               icon: Icons.person_add_outlined,
-              onPressed: () async {
-                final created = await CustomerRegisterDialog.showCreate(context);
-                if (!mounted || created != true) return;
-                await _search(_selectedAptCode);
-              },
+              onPressed: _openRegisterDialog,
             ),
             const SizedBox(width: 8),
             TkPrimaryButton(
@@ -229,14 +238,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                         selectedRowIndex: _selectedRowIndex,
                         onRowTap: (index) =>
                             setState(() => _selectedRowIndex = index),
-                        onRowDoubleTap: (index) async {
-                          final updated = await CustomerRegisterDialog.showEdit(
-                            context,
-                            customers[index],
-                          );
-                          if (!mounted || updated != true) return;
-                          await _search(_selectedAptCode);
-                        },
+                        onRowDoubleTap: (index) =>
+                            _openEditDialog(customers[index]),
                       );
                     },
                   ),

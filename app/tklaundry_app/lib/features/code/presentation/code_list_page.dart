@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../shared/utils/tk_feedback.dart';
 import '../../../shared/widgets/tk_async_error_body.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
 import '../data/code_api.dart';
@@ -151,9 +152,7 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
     await _search();
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('코드가 수정되었습니다.')),
-    );
+    context.showTkMessage('코드가 수정되었습니다.');
   }
 
   Future<void> _deleteSelected(Code code) async {
@@ -189,14 +188,10 @@ class _CodeListPageState extends ConsumerState<CodeListPage> {
       if (!mounted) return;
 
       setState(() => _selectedCodeId = null);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('코드가 삭제되었습니다.')),
-      );
+      context.showTkMessage('코드가 삭제되었습니다.');
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      context.showTkApiError(error);
     } finally {
       if (mounted) {
         setState(() => _isDeleting = false);

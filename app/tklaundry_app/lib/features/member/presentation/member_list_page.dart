@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/utils/tk_feedback.dart';
 import '../../../shared/widgets/tk_async_error_body.dart';
 import '../../../shared/widgets/tk_grid_table.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
@@ -35,9 +36,7 @@ class _MemberListPageState extends ConsumerState<MemberListPage> {
 
     await ref.read(memberListProvider.notifier).search();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('회원이 등록되었습니다.')),
-    );
+    context.showTkMessage('회원이 등록되었습니다.');
   }
 
   Future<void> _openEditDialog(Member member) async {
@@ -47,9 +46,7 @@ class _MemberListPageState extends ConsumerState<MemberListPage> {
     await ref.read(memberListProvider.notifier).search();
     if (!mounted) return;
     setState(() => _selectedRowIndex = null);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('회원 정보가 수정되었습니다.')),
-    );
+    context.showTkMessage('회원 정보가 수정되었습니다.');
   }
 
   Future<void> _deleteSelected(Member member) async {
@@ -83,14 +80,10 @@ class _MemberListPageState extends ConsumerState<MemberListPage> {
       if (!mounted) return;
 
       setState(() => _selectedRowIndex = null);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('회원이 삭제되었습니다.')),
-      );
+      context.showTkMessage('회원이 삭제되었습니다.');
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      context.showTkApiError(error);
     } finally {
       if (mounted) {
         setState(() => _isDeleting = false);

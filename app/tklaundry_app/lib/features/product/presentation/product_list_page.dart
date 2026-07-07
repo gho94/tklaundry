@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/code_constants.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/utils/tk_feedback.dart';
 import '../../../shared/widgets/tk_async_error_body.dart';
 import '../../../shared/widgets/tk_combo_box.dart';
 import '../../../shared/widgets/tk_grid_table.dart';
@@ -143,6 +144,42 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
     return codeId;
   }
 
+  Future<void> _openRegisterDialog({
+    required String processCode,
+    required String groupCode,
+    required List<Code> codes,
+  }) async {
+    final created = await ProductRegisterDialog.showCreate(
+      context,
+      processCode: processCode,
+      groupCode: groupCode,
+      processName: _lookupCodeName(codes, processCode),
+      groupName: _lookupCodeName(codes, groupCode),
+    );
+    if (!mounted || created != true) return;
+    await _search(processCode: processCode, groupCode: groupCode);
+    if (!mounted) return;
+    context.showTkMessage('제품이 등록되었습니다.');
+  }
+
+  Future<void> _openEditDialog(
+    Product product,
+    List<Code> codes, {
+    required String processCode,
+    required String groupCode,
+  }) async {
+    final updated = await ProductRegisterDialog.showEdit(
+      context,
+      product,
+      processName: _lookupCodeName(codes, product.processCode),
+      groupName: _lookupCodeName(codes, product.groupCode),
+    );
+    if (!mounted || updated != true) return;
+    await _search(processCode: processCode, groupCode: groupCode);
+    if (!mounted) return;
+    context.showTkMessage('제품 정보가 수정되었습니다.');
+  }
+
   Future<void> _deleteSelected(Product product) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -176,14 +213,10 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
       );
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('제품이 삭제되었습니다.')),
-      );
+      context.showTkMessage('제품이 삭제되었습니다.');
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      context.showTkApiError(error);
     } finally {
       if (mounted) {
         setState(() => _isDeleting = false);
@@ -257,21 +290,11 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
               icon: Icons.add_outlined,
               onPressed: !canSearch
                   ? null
-                  : () async {
-                      final created = await ProductRegisterDialog.showCreate(
-                        context,
+                  : () => _openRegisterDialog(
                         processCode: effectiveProcessCode,
                         groupCode: effectiveGroupCode,
-                        processName:
-                            _lookupCodeName(codes, effectiveProcessCode),
-                        groupName: _lookupCodeName(codes, effectiveGroupCode),
-                      );
-                      if (!mounted || created != true) return;
-                      await _search(
-                        processCode: effectiveProcessCode,
-                        groupCode: effectiveGroupCode,
-                      );
-                    },
+                        codes: codes,
+                      ),
             ),
             const SizedBox(width: 8),
             TkPrimaryButton(
@@ -343,26 +366,12 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
                         selectedRowIndex: _selectedRowIndex,
                         onRowTap: (index) =>
                             setState(() => _selectedRowIndex = index),
-                        onRowDoubleTap: (index) async {
-                          final product = products[index];
-                          final updated = await ProductRegisterDialog.showEdit(
-                            context,
-                            product,
-                            processName: _lookupCodeName(
-                              codes,
-                              product.processCode,
-                            ),
-                            groupName: _lookupCodeName(
-                              codes,
-                              product.groupCode,
-                            ),
-                          );
-                          if (!mounted || updated != true) return;
-                          await _search(
-                            processCode: effectiveProcessCode!,
-                            groupCode: effectiveGroupCode!,
-                          );
-                        },
+                        onRowDoubleTap: (index) => _openEditDialog(
+                          products[index],
+                          codes,
+                          processCode: effectiveProcessCode!,
+                          groupCode: effectiveGroupCode!,
+                        ),
                       );
                     },
                   ),
