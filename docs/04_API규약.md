@@ -10,6 +10,14 @@
 | 형식 | JSON (`application/json; charset=utf-8`) |
 | 추적 ID | `X-Request-Id` (없으면 서버 생성, 응답에도 포함) |
 
+### 등록·수정·삭제 응답 (1단계 현행)
+
+| Method | 성공 HTTP | body |
+|--------|-----------|------|
+| `POST` (등록) | `201` | 생성된 객체 JSON |
+| `PUT` (수정) | `204` | 없음 |
+| `DELETE` | `204` | 없음 |
+
 ### 오류 응답
 
 ```json
@@ -41,7 +49,6 @@
 | POST | `/api/auth/login` | 로그인 |
 | POST | `/api/auth/register` | 회원가입 |
 | GET | `/api/members` | 회원 목록 |
-| GET | `/api/members/{userId}` | 회원 상세 |
 | PUT | `/api/members/{userId}` | 회원 수정 |
 | DELETE | `/api/members/{userId}` | 회원 삭제 |
 | GET | `/api/members/exists?userId=` | 아이디 중복 확인 |
@@ -89,16 +96,16 @@
 ]
 ```
 
-**회원 상세** `GET /api/members/{userId}` · **수정** `PUT /api/members/{userId}`
+- 관리용 **단건 조회 API 없음** — 앱은 목록 그리드 행으로 수정 다이얼로그 채움 (레거시 `FrmMember`와 동일)
+- 로그인 시 회원 조회는 서버 내부 `getTblComMember` (HTTP 노출 없음)
+
+**회원 수정** `PUT /api/members/{userId}`
 
 ```json
-// 상세 성공 (password 미포함)
-{ "userId": "admin", "userName": "관리자", "useYn": "Y" }
-
-// 수정 요청 (password 생략 시 기존 비밀번호 유지)
+// 요청 (password 생략 시 기존 비밀번호 유지)
 { "userName": "관리자", "useYn": "Y", "password": "새비번" }
 
-// 수정 성공 204 (body 없음)
+// 성공 204 (body 없음)
 ```
 
 **회원 삭제** `DELETE /api/members/{userId}`
