@@ -9,20 +9,21 @@ import '../../../shared/widgets/tk_text_field.dart';
 import '../../auth/data/auth_api.dart';
 import '../../auth/presentation/auth_provider.dart';
 import '../data/member_api.dart';
+import '../domain/member.dart';
 
 class MemberRegisterDialog extends ConsumerStatefulWidget {
   const MemberRegisterDialog({
     super.key,
-    this.userId,
+    this.member,
     this.signInAfterRegister = false,
     this.autoLogin = false,
   });
 
-  final String? userId;
+  final Member? member;
   final bool signInAfterRegister;
   final bool autoLogin;
 
-  bool get _isEdit => userId != null;
+  bool get _isEdit => member != null;
 
   static Future<bool?> showCreate(
     BuildContext context, {
@@ -38,10 +39,10 @@ class MemberRegisterDialog extends ConsumerStatefulWidget {
     );
   }
 
-  static Future<bool?> showEdit(BuildContext context, String userId) {
+  static Future<bool?> showEdit(BuildContext context, Member member) {
     return showDialog<bool>(
       context: context,
-      builder: (_) => MemberRegisterDialog(userId: userId),
+      builder: (_) => MemberRegisterDialog(member: member),
     );
   }
 
@@ -74,7 +75,6 @@ class _MemberRegisterDialogState extends ConsumerState<MemberRegisterDialog> {
   ];
 
   String _useYn = 'Y';
-  bool _isLoading = false;
   bool _isCheckingId = false;
   bool _isSubmitting = false;
   bool _idChecked = false;
@@ -87,9 +87,12 @@ class _MemberRegisterDialogState extends ConsumerState<MemberRegisterDialog> {
   @override
   void initState() {
     super.initState();
-    if (widget._isEdit) {
-      _loadMember();
-    }
+    final member = widget.member;
+    if (member == null) return;
+
+    _userIdController.text = member.userId;
+    _userNameController.text = member.userName;
+    _useYn = member.useYn == 'N' ? 'N' : 'Y';
   }
 
   @override
@@ -98,32 +101,6 @@ class _MemberRegisterDialogState extends ConsumerState<MemberRegisterDialog> {
     _passwordController.dispose();
     _userNameController.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadMember() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-      _traceId = null;
-    });
-
-    try {
-      final member = await _memberApi.getMember(widget.userId!);
-      if (!mounted) return;
-      _userIdController.text = member.userId;
-      _userNameController.text = member.userName;
-      setState(() => _useYn = member.useYn == 'N' ? 'N' : 'Y');
-    } on ApiException catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = error.message;
-        _traceId = error.traceId;
-      });
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
   }
 
   void _resetUserIdCheck() {
@@ -264,7 +241,7 @@ class _MemberRegisterDialogState extends ConsumerState<MemberRegisterDialog> {
 
     try {
       await _memberApi.updateMember(
-        userId: widget.userId!,
+        userId: widget.member!.userId,
         userName: userName,
         useYn: _useYn,
         password: password.isEmpty ? null : password,
@@ -287,107 +264,102 @@ class _MemberRegisterDialogState extends ConsumerState<MemberRegisterDialog> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget._isEdit;
-    final isBusy = _isLoading || _isCheckingId || _isSubmitting;
+    final isBusy = _isCheckingId || _isSubmitting;
 
     return AlertDialog(
       title: Text(isEdit ? '회원 수정' : '회원 등록'),
       content: SizedBox(
         width: 420,
-        child: _isLoading
-            ? const Padding(
-                padding: EdgeInsets.symmetric(vertical: 32),
-                child: Center(child: CircularProgressIndicator()),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (isEdit)
+              TkTextField(
+                controller: _userIdController,
+                label: '아이디',
+                readOnly: true,
               )
-            : Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+            else
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (isEdit)
-                    TkTextField(
+                  Expanded(
+                    child: TkTextField(
                       controller: _userIdController,
                       label: '아이디',
-                      readOnly: true,
-                    )
-                  else
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: TkTextField(
-                            controller: _userIdController,
-                            label: '아이디',
-                            hint: '아이디',
-                            onChanged: (_) => _resetUserIdCheck(),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: TkPrimaryButton(
-                            label: '중복 확인',
-                            variant: TkButtonVariant.outline,
-                            isLoading: _isCheckingId,
-                            onPressed: isBusy ? null : _checkUserId,
-                          ),
-                        ),
-                      ],
+                      hint: '아이디',
+                      onChanged: (_) => _resetUserIdCheck(),
                     ),
-                  if (!isEdit && _userIdCheckMessage != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      _userIdCheckMessage!,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: _userIdCheckColor,
-                          ),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  TkTextField(
-                    controller: _passwordController,
-                    label: '비밀번호',
-                    hint: isEdit ? '변경 시에만 입력' : '비밀번호',
-                    obscureText: true,
                   ),
-                  const SizedBox(height: 12),
-                  TkTextField(
-                    controller: _userNameController,
-                    label: '이름',
-                    hint: '이름',
-                  ),
-                  const SizedBox(height: 12),
-                  TkComboBox<String>(
-                    items: _useYnItems,
-                    value: _useYn,
-                    label: '사용여부',
-                    showAllOption: false,
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() => _useYn = value);
-                      }
-                    },
-                  ),
-                  if (_errorMessage != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      _errorMessage!,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.error,
-                            height: 1.4,
-                          ),
+                  const SizedBox(width: 12),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: TkPrimaryButton(
+                      label: '중복 확인',
+                      variant: TkButtonVariant.outline,
+                      isLoading: _isCheckingId,
+                      onPressed: isBusy ? null : _checkUserId,
                     ),
-                  ],
-                  if (_traceId != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      'traceId: $_traceId',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
-                            fontSize: 11,
-                          ),
-                    ),
-                  ],
+                  ),
                 ],
               ),
+            if (!isEdit && _userIdCheckMessage != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _userIdCheckMessage!,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: _userIdCheckColor,
+                    ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            TkTextField(
+              controller: _passwordController,
+              label: '비밀번호',
+              hint: isEdit ? '변경 시에만 입력' : '비밀번호',
+              obscureText: true,
+            ),
+            const SizedBox(height: 12),
+            TkTextField(
+              controller: _userNameController,
+              label: '이름',
+              hint: '이름',
+            ),
+            const SizedBox(height: 12),
+            TkComboBox<String>(
+              items: _useYnItems,
+              value: _useYn,
+              label: '사용여부',
+              showAllOption: false,
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => _useYn = value);
+                }
+              },
+            ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                _errorMessage!,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.error,
+                      height: 1.4,
+                    ),
+              ),
+            ],
+            if (_traceId != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'traceId: $_traceId',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                    ),
+              ),
+            ],
+          ],
+        ),
       ),
       actions: [
         TextButton(

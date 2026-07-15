@@ -5,10 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/widgets/tk_sidebar.dart';
 import '../../auth/presentation/auth_provider.dart';
-import '../../code/presentation/code_list_page.dart';
-import '../../customer/presentation/customer_list_page.dart';
-import '../../member/presentation/member_list_page.dart';
-import '../../product/presentation/product_list_page.dart';
+import 'shell_menu_config.dart';
 
 class MainShellPage extends ConsumerStatefulWidget {
   const MainShellPage({super.key});
@@ -19,82 +16,6 @@ class MainShellPage extends ConsumerStatefulWidget {
 
 class _MainShellPageState extends ConsumerState<MainShellPage> {
   String? _selectedItemId;
-
-  static const _mainGroups = [
-    TkSidebarGroup(
-      label: '메뉴',
-      icon: Icons.widgets_outlined,
-      items: [
-        TkSidebarItem(id: 'order', label: '접수', icon: Icons.inbox_outlined),
-        TkSidebarItem(
-          id: 'delivery',
-          label: '출고',
-          icon: Icons.local_shipping_outlined,
-        ),
-        TkSidebarItem(
-          id: 'expend',
-          label: '지출',
-          icon: Icons.payments_outlined,
-        ),
-      ],
-    ),
-    TkSidebarGroup(
-      label: '통계',
-      icon: Icons.insights_outlined,
-      items: [
-        TkSidebarItem(
-          id: 'deliveryView',
-          label: '출고 내역',
-          icon: Icons.list_alt_outlined,
-        ),
-        TkSidebarItem(
-          id: 'salesView',
-          label: '매출',
-          icon: Icons.receipt_long_outlined,
-        ),
-        TkSidebarItem(
-          id: 'salesChart',
-          label: '매출현황',
-          icon: Icons.bar_chart_outlined,
-        ),
-      ],
-    ),
-    TkSidebarGroup(
-      label: '기초',
-      icon: Icons.folder_copy_outlined,
-      items: [
-        TkSidebarItem(
-          id: 'customer',
-          label: '고객 관리',
-          icon: Icons.people_outline,
-        ),
-        TkSidebarItem(
-          id: 'product',
-          label: '제품 관리',
-          icon: Icons.inventory_2_outlined,
-        ),
-      ],
-    ),
-  ];
-
-  static const _bottomGroups = [
-    TkSidebarGroup(
-      label: '설정',
-      icon: Icons.settings_outlined,
-      items: [
-        TkSidebarItem(
-          id: 'code',
-          label: '코드',
-          icon: Icons.account_tree_outlined,
-        ),
-        TkSidebarItem(
-          id: 'member',
-          label: '사용자',
-          icon: Icons.person_outline,
-        ),
-      ],
-    ),
-  ];
 
   void _logout() {
     ref.read(authProvider.notifier).logout();
@@ -113,8 +34,8 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           TkSidebar(
-            groups: _mainGroups,
-            bottomGroups: _bottomGroups,
+            groups: ShellMenuConfig.mainGroups,
+            bottomGroups: ShellMenuConfig.bottomGroups,
             selectedItemId: _selectedItemId,
             onItemSelected: _onItemSelected,
           ),
@@ -143,35 +64,12 @@ class _ShellContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (selectedItemId == 'code') {
+    final page = ShellMenuConfig.pageFor(selectedItemId);
+    if (page != null) {
       return Container(
         color: AppColors.neutral50,
         padding: const EdgeInsets.all(AppSpacing.s4),
-        child: const CodeListPage(),
-      );
-    }
-
-    if (selectedItemId == 'member') {
-      return Container(
-        color: AppColors.neutral50,
-        padding: const EdgeInsets.all(AppSpacing.s4),
-        child: const MemberListPage(),
-      );
-    }
-
-    if (selectedItemId == 'customer') {
-      return Container(
-        color: AppColors.neutral50,
-        padding: const EdgeInsets.all(AppSpacing.s4),
-        child: const CustomerListPage(),
-      );
-    }
-
-    if (selectedItemId == 'product') {
-      return Container(
-        color: AppColors.neutral50,
-        padding: const EdgeInsets.all(AppSpacing.s4),
-        child: const ProductListPage(),
+        child: page,
       );
     }
 

@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/code_constants.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../shared/utils/tk_feedback.dart';
+import '../../../shared/widgets/tk_async_error_body.dart';
+import '../../../shared/widgets/tk_confirm_dialog.dart';
 import '../../../shared/widgets/tk_combo_box.dart';
+import '../../../shared/widgets/tk_grid_panel.dart';
 import '../../../shared/widgets/tk_grid_table.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
 import '../../code/domain/code.dart';
+import '../../code/presentation/code_list_extensions.dart';
 import '../../code/presentation/code_provider.dart';
 import '../data/product_api.dart';
 import '../domain/product.dart';
@@ -21,13 +26,11 @@ class ProductListPage extends ConsumerStatefulWidget {
 }
 
 class _ProductListPageState extends ConsumerState<ProductListPage> {
-  static const _processParentCodeId = 'B10002';
-
   static const _columns = [
     TkGridColumn(label: '제품명'),
     TkGridColumn(
       label: '단가',
-      width: 120,
+      flexRatio: 0.3,
       numeric: true,
       align: TextAlign.end,
     ),
@@ -39,35 +42,6 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
   bool _initialized = false;
   bool _isDeleting = false;
   final _productApi = ProductApi();
-
-  List<TkComboItem<String>> _processComboItems(List<Code> codes) {
-    final processes = codes
-        .where((code) => code.pCodeId.trim() == _processParentCodeId)
-        .toList()
-      ..sort((a, b) => a.codeId.compareTo(b.codeId));
-
-    return [
-      for (final process in processes)
-        TkComboItem(value: process.codeId.trim(), label: process.codeName),
-    ];
-  }
-
-  List<TkComboItem<String>> _groupComboItems(
-    List<Code> codes,
-    String? processCode,
-  ) {
-    if (processCode == null || processCode.isEmpty) return const [];
-
-    final groups = codes
-        .where((code) => code.pCodeId.trim() == processCode)
-        .toList()
-      ..sort((a, b) => a.codeId.compareTo(b.codeId));
-
-    return [
-      for (final group in groups)
-        TkComboItem(value: group.codeId.trim(), label: group.codeName),
-    ];
-  }
 
   Future<void> _search({
     required String processCode,
@@ -117,7 +91,7 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
     if (_initialized || processItems.isEmpty) return;
 
     final processCode = processItems.first.value;
-    final groupItems = _groupComboItems(codes, processCode);
+    final groupItems = codes.comboItems(processCode);
     if (groupItems.isEmpty) return;
 
     _initialized = true;
@@ -134,35 +108,50 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
     return price.toString();
   }
 
-  String _lookupCodeName(List<Code> codes, String codeId) {
-    for (final code in codes) {
-      if (code.codeId.trim() == codeId.trim()) {
-        return code.codeName;
-      }
-    }
-    return codeId;
+  Future<void> _openRegisterDialog({
+    required String processCode,
+    required String groupCode,
+    required List<Code> codes,
+  }) async {
+    final created = await ProductRegisterDialog.showCreate(
+      context,
+      processCode: processCode,
+      groupCode: groupCode,
+      processName: codes.displayName(processCode),
+      groupName: codes.displayName(groupCode),
+    );
+    if (!mounted || created != true) return;
+    await _search(processCode: processCode, groupCode: groupCode);
+    if (!mounted) return;
+    context.showTkMessage('제품이 등록되었습니다.');
+  }
+
+  Future<void> _openEditDialog(
+    Product product,
+    List<Code> codes, {
+    required String processCode,
+    required String groupCode,
+  }) async {
+    final updated = await ProductRegisterDialog.showEdit(
+      context,
+      product,
+      processName: codes.displayName(product.processCode),
+      groupName: codes.displayName(product.groupCode),
+    );
+    if (!mounted || updated != true) return;
+    await _search(processCode: processCode, groupCode: groupCode);
+    if (!mounted) return;
+    context.showTkMessage('제품 정보가 수정되었습니다.');
   }
 
   Future<void> _deleteSelected(Product product) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('제품 삭제'),
-        content: Text('\'${product.productName}\' 제품을 삭제하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('삭제'),
-          ),
-        ],
-      ),
+    final confirmed = await showTkConfirmDialog(
+      context,
+      title: '제품 삭제',
+      message: '\'${product.productName}\' 제품을 삭제하시겠습니까?',
     );
 
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
 
     setState(() => _isDeleting = true);
 
@@ -176,14 +165,10 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
       );
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('제품이 삭제되었습니다.')),
-      );
+      context.showTkMessage('제품이 삭제되었습니다.');
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      context.showTkApiError(error);
     } finally {
       if (mounted) {
         setState(() => _isDeleting = false);
@@ -194,12 +179,11 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(productListProvider);
-    final codesAsync = ref.watch(codeProvider);
-    final codes = codesAsync.asData?.value ?? const <Code>[];
-    final processItems = _processComboItems(codes);
+    final codes = ref.watch(codeProvider);
+    final processItems = codes.comboItems(CodeConstants.productProcess);
     final effectiveProcessCode = _selectedProcessCode ??
         (processItems.isNotEmpty ? processItems.first.value : null);
-    final groupItems = _groupComboItems(codes, effectiveProcessCode);
+    final groupItems = codes.comboItems(effectiveProcessCode ?? '');
     _ensureInitialSearch(processItems, codes);
 
     final effectiveGroupCode = _selectedGroupCode ??
@@ -234,7 +218,7 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
                     ? null
                     : (value) => _onProcessChanged(
                           value,
-                          _groupComboItems(codes, value),
+                          codes.comboItems(value ?? ''),
                         ),
               ),
             ),
@@ -258,21 +242,11 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
               icon: Icons.add_outlined,
               onPressed: !canSearch
                   ? null
-                  : () async {
-                      final created = await ProductRegisterDialog.showCreate(
-                        context,
+                  : () => _openRegisterDialog(
                         processCode: effectiveProcessCode,
                         groupCode: effectiveGroupCode,
-                        processName:
-                            _lookupCodeName(codes, effectiveProcessCode),
-                        groupName: _lookupCodeName(codes, effectiveGroupCode),
-                      );
-                      if (!mounted || created != true) return;
-                      await _search(
-                        processCode: effectiveProcessCode,
-                        groupCode: effectiveGroupCode,
-                      );
-                    },
+                        codes: codes,
+                      ),
             ),
             const SizedBox(width: 8),
             TkPrimaryButton(
@@ -308,29 +282,18 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
         ),
         const SizedBox(height: 16),
         Expanded(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: codesAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => _ErrorBody(error: error),
-                data: (_) {
-                  if (processItems.isEmpty) {
-                    return const Center(child: Text('공정 코드가 없습니다.'));
-                  }
-                  if (groupItems.isEmpty) {
-                    return const Center(child: Text('그룹 코드가 없습니다.'));
-                  }
-
-                  return productsAsync.when(
+          child: TkGridPanel(
+            child: processItems.isEmpty
+                ? const Center(child: Text('공정 코드가 없습니다.'))
+                : groupItems.isEmpty
+                    ? const Center(child: Text('그룹 코드가 없습니다.'))
+                    : productsAsync.when(
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
-                    error: (error, _) => _ErrorBody(error: error),
+                    error: (error, _) => TkAsyncErrorBody(
+                      error: error,
+                      fallbackMessage: '제품 목록을 불러오지 못했습니다.',
+                    ),
                     data: (products) {
                       if (_selectedRowIndex != null &&
                           _selectedRowIndex! >= products.length) {
@@ -348,32 +311,15 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
                         selectedRowIndex: _selectedRowIndex,
                         onRowTap: (index) =>
                             setState(() => _selectedRowIndex = index),
-                        onRowDoubleTap: (index) async {
-                          final product = products[index];
-                          final updated = await ProductRegisterDialog.showEdit(
-                            context,
-                            product,
-                            processName: _lookupCodeName(
-                              codes,
-                              product.processCode,
-                            ),
-                            groupName: _lookupCodeName(
-                              codes,
-                              product.groupCode,
-                            ),
-                          );
-                          if (!mounted || updated != true) return;
-                          await _search(
-                            processCode: effectiveProcessCode!,
-                            groupCode: effectiveGroupCode!,
-                          );
-                        },
+                        onRowDoubleTap: (index) => _openEditDialog(
+                          products[index],
+                          codes,
+                          processCode: effectiveProcessCode!,
+                          groupCode: effectiveGroupCode!,
+                        ),
                       );
                     },
-                  );
-                },
-              ),
-            ),
+                  ),
           ),
         ),
       ],
@@ -385,46 +331,5 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
       Text(product.productName),
       Text(_formatPrice(product.price)),
     ];
-  }
-}
-
-class _ErrorBody extends StatelessWidget {
-  const _ErrorBody({required this.error});
-
-  final Object error;
-
-  @override
-  Widget build(BuildContext context) {
-    final apiError = error is ApiException ? error as ApiException : null;
-    final message = apiError?.message ?? '제품 목록을 불러오지 못했습니다.';
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.error,
-                    height: 1.4,
-                  ),
-            ),
-            if (apiError?.traceId != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                'traceId: ${apiError!.traceId}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                      fontSize: 11,
-                    ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
   }
 }

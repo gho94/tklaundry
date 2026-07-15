@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/code_constants.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../shared/utils/tk_feedback.dart';
+import '../../../shared/widgets/tk_async_error_body.dart';
+import '../../../shared/widgets/tk_confirm_dialog.dart';
 import '../../../shared/widgets/tk_combo_box.dart';
+import '../../../shared/widgets/tk_grid_panel.dart';
 import '../../../shared/widgets/tk_grid_table.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
 import '../../code/domain/code.dart';
+import '../../code/presentation/code_list_extensions.dart';
 import '../../code/presentation/code_provider.dart';
 import '../data/customer_api.dart';
 import '../domain/customer.dart';
@@ -30,35 +35,11 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     TkGridColumn(label: '전화번호'),
   ];
 
-  static const _customerManageCodeId = 'A10001';
-
   String? _selectedAptCode;
   int? _selectedRowIndex;
   bool _initialized = false;
   bool _isDeleting = false;
   final _customerApi = CustomerApi();
-
-  List<TkComboItem<String>> _aptComboItems(List<Code> codes) {
-    final apartments = codes
-        .where((code) => code.pCodeId.trim() == _customerManageCodeId)
-        .toList()
-      ..sort((a, b) => a.codeId.compareTo(b.codeId));
-
-    return [
-      for (final apt in apartments)
-        TkComboItem(value: apt.codeId.trim(), label: apt.codeName),
-      const TkComboItem(value: '', label: '기타'),
-    ];
-  }
-
-  Map<String, String> _codeNameMap(List<Code> codes) {
-    return {for (final code in codes) code.codeId.trim(): code.codeName};
-  }
-
-  String _lookupCodeName(Map<String, String> codeNames, String codeId) {
-    if (codeId.isEmpty) return '';
-    return codeNames[codeId.trim()] ?? codeId;
-  }
 
   Future<void> _search(String? aptCode) async {
     setState(() {
@@ -77,26 +58,30 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     });
   }
 
+  Future<void> _openRegisterDialog() async {
+    final created = await CustomerRegisterDialog.showCreate(context);
+    if (!mounted || created != true) return;
+    await _search(_selectedAptCode);
+    if (!mounted) return;
+    context.showTkMessage('고객이 등록되었습니다.');
+  }
+
+  Future<void> _openEditDialog(Customer customer) async {
+    final updated = await CustomerRegisterDialog.showEdit(context, customer);
+    if (!mounted || updated != true) return;
+    await _search(_selectedAptCode);
+    if (!mounted) return;
+    context.showTkMessage('고객 정보가 수정되었습니다.');
+  }
+
   Future<void> _deleteSelected(Customer customer) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('고객 삭제'),
-        content: Text('\'${customer.custName}\' 고객을 삭제하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('삭제'),
-          ),
-        ],
-      ),
+    final confirmed = await showTkConfirmDialog(
+      context,
+      title: '고객 삭제',
+      message: '\'${customer.custName}\' 고객을 삭제하시겠습니까?',
     );
 
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
 
     setState(() => _isDeleting = true);
 
@@ -107,14 +92,10 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
       await _search(_selectedAptCode);
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('고객이 삭제되었습니다.')),
-      );
+      context.showTkMessage('고객이 삭제되었습니다.');
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      context.showTkApiError(error);
     } finally {
       if (mounted) {
         setState(() => _isDeleting = false);
@@ -125,10 +106,11 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
   @override
   Widget build(BuildContext context) {
     final customersAsync = ref.watch(customerListProvider);
-    final codesAsync = ref.watch(codeProvider);
-    final codes = codesAsync.asData?.value ?? const <Code>[];
-    final codeNames = _codeNameMap(codes);
-    final aptItems = _aptComboItems(codes);
+    final codes = ref.watch(codeProvider);
+    final aptItems = codes.comboItems(
+      CodeConstants.customerApt,
+      includeOther: true,
+    );
     _ensureInitialSearch(aptItems);
 
     return Column(
@@ -158,11 +140,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
               label: '등록',
               variant: TkButtonVariant.outline,
               icon: Icons.person_add_outlined,
-              onPressed: () async {
-                final created = await CustomerRegisterDialog.showCreate(context);
-                if (!mounted || created != true) return;
-                await _search(_selectedAptCode);
-              },
+              onPressed: _openRegisterDialog,
             ),
             const SizedBox(width: 8),
             TkPrimaryButton(
@@ -195,26 +173,16 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
         ),
         const SizedBox(height: 16),
         Expanded(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: codesAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => _ErrorBody(error: error),
-                data: (_) {
-                  if (aptItems.isEmpty) {
-                    return const Center(child: Text('아파트 코드가 없습니다.'));
-                  }
-
-                  return customersAsync.when(
+          child: TkGridPanel(
+            child: aptItems.isEmpty
+                ? const Center(child: Text('아파트 코드가 없습니다.'))
+                : customersAsync.when(
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
-                    error: (error, _) => _ErrorBody(error: error),
+                    error: (error, _) => TkAsyncErrorBody(
+                      error: error,
+                      fallbackMessage: '고객 목록을 불러오지 못했습니다.',
+                    ),
                     data: (customers) {
                       if (_selectedRowIndex != null &&
                           _selectedRowIndex! >= customers.length) {
@@ -229,79 +197,29 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                         columns: _columns,
                         itemCount: customers.length,
                         itemBuilder: (index) =>
-                            _buildRow(codeNames, customers[index]),
+                            _buildRow(codes, customers[index]),
                         selectedRowIndex: _selectedRowIndex,
                         onRowTap: (index) =>
                             setState(() => _selectedRowIndex = index),
-                        onRowDoubleTap: (index) async {
-                          final updated = await CustomerRegisterDialog.showEdit(
-                            context,
-                            customers[index],
-                          );
-                          if (!mounted || updated != true) return;
-                          await _search(_selectedAptCode);
-                        },
+                        onRowDoubleTap: (index) =>
+                            _openEditDialog(customers[index]),
                       );
                     },
-                  );
-                },
-              ),
-            ),
+                  ),
           ),
         ),
       ],
     );
   }
 
-  List<Widget> _buildRow(Map<String, String> codeNames, Customer customer) {
+  List<Widget> _buildRow(List<Code> codes, Customer customer) {
     return [
       Text(customer.custName),
-      Text(_lookupCodeName(codeNames, customer.aptCode)),
-      Text(_lookupCodeName(codeNames, customer.buildingCode)),
-      Text(_lookupCodeName(codeNames, customer.floorCode)),
-      Text(_lookupCodeName(codeNames, customer.roomCode)),
+      Text(codes.displayName(customer.aptCode)),
+      Text(codes.displayName(customer.buildingCode)),
+      Text(codes.displayName(customer.floorCode)),
+      Text(codes.displayName(customer.roomCode)),
       Text(customer.custPhone),
     ];
-  }
-}
-
-class _ErrorBody extends StatelessWidget {
-  const _ErrorBody({required this.error});
-
-  final Object error;
-
-  @override
-  Widget build(BuildContext context) {
-    final apiError = error is ApiException ? error as ApiException : null;
-    final message = apiError?.message ?? '고객 목록을 불러오지 못했습니다.';
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.error,
-                    height: 1.4,
-                  ),
-            ),
-            if (apiError?.traceId != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                'traceId: ${apiError!.traceId}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                      fontSize: 11,
-                    ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
   }
 }

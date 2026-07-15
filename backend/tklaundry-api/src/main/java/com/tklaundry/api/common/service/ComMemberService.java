@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import com.tklaundry.api.common.CommonInfo;
 import com.tklaundry.api.common.mapper.ComMemberMapper;
 import com.tklaundry.api.common.model.ComMember;
-import com.tklaundry.api.common.service.IComBaseDataService;
 import com.tklaundry.api.common.web.ApiErrorCode;
 import com.tklaundry.api.common.web.ApiException;
 
@@ -73,7 +72,11 @@ public class ComMemberService implements IComMemberService {
 
 		comMemberMapper.insertComMember(member);
 
-		ComMember created = comMemberMapper.selectComMemberByUserId(request.getUserId());
+		ComMember created = ComMember.builder()
+				.userId(request.getUserId())
+				.userName(request.getUserName())
+				.useYn(request.getUseYn())
+				.build();
 		if (loginUser == null) {
 			commonInfo.bindLogin(created, comBaseDataService.listCodes());
 			comMemberMapper.updateComMemberLoginDate(created.getUserId());
@@ -83,21 +86,7 @@ public class ComMemberService implements IComMemberService {
 	}
 
 	@Override
-	public ComMember getMember(String userId) {
-		ComMember member = comMemberMapper.selectComMemberByUserId(userId);
-		if (member == null) {
-			throw new ApiException(ApiErrorCode.NOT_FOUND, "회원을 찾을 수 없습니다.");
-		}
-
-		return member;
-	}
-
-	@Override
 	public void updateMember(String userId, ComMember request) {
-		if (comMemberMapper.selectComMemberByUserId(userId) == null) {
-			throw new ApiException(ApiErrorCode.NOT_FOUND, "회원을 찾을 수 없습니다.");
-		}
-
 		String password = request.getPassword();
 		if (password != null && password.isBlank()) {
 			password = null;
@@ -116,10 +105,6 @@ public class ComMemberService implements IComMemberService {
 
 	@Override
 	public void removeMember(String userId) {
-		if (comMemberMapper.selectComMemberByUserId(userId) == null) {
-			throw new ApiException(ApiErrorCode.NOT_FOUND, "회원을 찾을 수 없습니다.");
-		}
-
 		ComMember loginUser = commonInfo.getUser();
 		if (loginUser != null && userId.equals(loginUser.getUserId())) {
 			throw new ApiException(ApiErrorCode.CONFLICT, "로그인 중인 계정은 삭제할 수 없습니다.");

@@ -1,9 +1,9 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthLocalStorage {
-  static const _keyAutoLogin = 'auth_auto_login';
-  static const _keyUserId = 'auth_user_id';
-  static const _keyPassword = 'auth_password';
+  static const _keyAutoLogin = 'auto_login';
+  static const _keyUserId = 'user_id';
+  static const _keyPassword = 'password';
 
   Future<bool> isAutoLoginEnabled() async {
     final prefs = await SharedPreferences.getInstance();
@@ -15,13 +15,10 @@ class AuthLocalStorage {
     if (prefs.getBool(_keyAutoLogin) != true) return null;
 
     final userId = prefs.getString(_keyUserId);
+    if (userId == null || userId.isEmpty) return null;
+    
     final password = prefs.getString(_keyPassword);
-    if (userId == null ||
-        userId.isEmpty ||
-        password == null ||
-        password.isEmpty) {
-      return null;
-    }
+    if (password == null || password.isEmpty) return null;
 
     return (userId: userId, password: password);
   }

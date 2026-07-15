@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/code_constants.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/tk_combo_box.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
 import '../../../shared/widgets/tk_text_field.dart';
 import '../../code/domain/code.dart';
+import '../../code/presentation/code_list_extensions.dart';
 import '../../code/presentation/code_provider.dart';
 import '../data/customer_api.dart';
 import '../domain/customer.dart';
@@ -41,10 +43,6 @@ class CustomerRegisterDialog extends ConsumerStatefulWidget {
 
 class _CustomerRegisterDialogState
     extends ConsumerState<CustomerRegisterDialog> {
-  static const _aptCategoryCodeId = 'A10001';
-  static const _floorCategoryCodeId = 'A10002';
-  static const _roomCategoryCodeId = 'A10003';
-
   final _customerApi = CustomerApi();
   final _custNameController = TextEditingController();
   final _custPhoneController = TextEditingController();
@@ -82,47 +80,25 @@ class _CustomerRegisterDialogState
     super.dispose();
   }
 
-  List<TkComboItem<String>> _comboItems(Iterable<Code> codes) {
-    final sorted = codes.toList()..sort((a, b) => a.codeId.compareTo(b.codeId));
-    return [
-      for (final code in sorted)
-        TkComboItem(value: code.codeId.trim(), label: code.codeName),
-    ];
-  }
-
   List<TkComboItem<String>> _aptItems(List<Code> codes) {
-    return _comboItems(
-      codes.where((code) => code.pCodeId.trim() == _aptCategoryCodeId),
+    return codes.comboItems(
+      CodeConstants.customerApt,
+      includeOther: true,
     );
   }
 
   List<TkComboItem<String>> _buildingItems(List<Code> codes) {
     final aptCode = _aptCode;
     if (aptCode == null) return const [];
-    return _comboItems(
-      codes.where((code) => code.pCodeId.trim() == aptCode),
-    );
+    return codes.comboItems(aptCode);
   }
 
   List<TkComboItem<String>> _floorItems(List<Code> codes) {
-    return _comboItems(
-      codes.where((code) => code.pCodeId.trim() == _floorCategoryCodeId),
-    );
+    return codes.comboItems(CodeConstants.customerFloor);
   }
 
   List<TkComboItem<String>> _roomItems(List<Code> codes) {
-    return _comboItems(
-      codes.where((code) => code.pCodeId.trim() == _roomCategoryCodeId),
-    );
-  }
-
-  String? _codeName(String codeId, List<Code> codes) {
-    for (final code in codes) {
-      if (code.codeId.trim() == codeId) {
-        return code.codeName;
-      }
-    }
-    return null;
+    return codes.comboItems(CodeConstants.customerRoom);
   }
 
   /// 레거시 `FrmCustomerInsert` 콤보 선택 시 `TxtCustName` 자동 조합과 동일.
@@ -130,7 +106,7 @@ class _CustomerRegisterDialogState
     final aptCode = _aptCode;
     if (aptCode == null) return '';
 
-    final aptName = _codeName(aptCode, codes);
+    final aptName = codes.nameOrNull(aptCode);
     if (aptName == null || aptName.isEmpty) return '';
 
     var name = aptName.length > 3
@@ -139,7 +115,7 @@ class _CustomerRegisterDialogState
 
     final buildingCode = _buildingCode;
     if (buildingCode != null) {
-      final buildingName = _codeName(buildingCode, codes);
+      final buildingName = codes.nameOrNull(buildingCode);
       if (buildingName != null && buildingName.length > 1) {
         name += ' ${buildingName.substring(0, buildingName.length - 1)}';
       }
@@ -147,7 +123,7 @@ class _CustomerRegisterDialogState
 
     final floorCode = _floorCode;
     if (floorCode != null) {
-      final floorName = _codeName(floorCode, codes);
+      final floorName = codes.nameOrNull(floorCode);
       if (floorName != null && floorName.length > 1) {
         name += '-${floorName.substring(0, floorName.length - 1)}';
       }
@@ -155,7 +131,7 @@ class _CustomerRegisterDialogState
 
     final roomCode = _roomCode;
     if (roomCode != null) {
-      final roomName = _codeName(roomCode, codes);
+      final roomName = codes.nameOrNull(roomCode);
       if (roomName != null && roomName.length > 1) {
         final roomNo = int.tryParse(
           roomName.substring(0, roomName.length - 1),
@@ -272,27 +248,13 @@ class _CustomerRegisterDialogState
 
   @override
   Widget build(BuildContext context) {
-    final codesAsync = ref.watch(codeProvider);
+    final codes = ref.watch(codeProvider);
 
     return AlertDialog(
       title: Text(_isEdit ? '고객 수정' : '고객 등록'),
       content: SizedBox(
         width: 420,
-        child: codesAsync.when(
-          loading: () => const Padding(
-            padding: EdgeInsets.symmetric(vertical: 32),
-            child: Center(child: CircularProgressIndicator()),
-          ),
-          error: (error, _) => Text(
-            error is ApiException
-                ? error.message
-                : '코드 정보를 불러오지 못했습니다.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.error,
-                ),
-          ),
-          data: (codes) => _buildForm(codes),
-        ),
+        child: _buildForm(codes),
       ),
       actions: [
         TextButton(
@@ -302,7 +264,7 @@ class _CustomerRegisterDialogState
         TkPrimaryButton(
           label: _isEdit ? '저장' : '등록',
           isLoading: _isSubmitting,
-          onPressed: _isSubmitting || codesAsync.isLoading ? null : _submit,
+          onPressed: _isSubmitting ? null : _submit,
         ),
       ],
     );

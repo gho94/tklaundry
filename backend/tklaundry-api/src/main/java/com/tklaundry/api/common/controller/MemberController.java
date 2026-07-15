@@ -34,11 +34,6 @@ public class MemberController {
 		return ResponseEntity.ok(comMemberService.existsUserId(userId));
 	}
 
-	@GetMapping("/{userId}")
-	public ResponseEntity<ComMember> getMember(@PathVariable String userId) {
-		return ResponseEntity.ok(comMemberService.getMember(userId));
-	}
-
 	@PutMapping("/{userId}")
 	public ResponseEntity<Void> updateMember(
 			@PathVariable String userId,

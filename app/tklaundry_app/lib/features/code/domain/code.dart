@@ -11,9 +11,9 @@ class Code {
 
   factory Code.fromJson(Map<String, dynamic> json) {
     return Code(
-      codeId: json['codeId'] as String,
-      pCodeId: json['pCodeId'] as String? ?? '',
-      codeName: json['codeName'] as String? ?? '',
+      codeId: (json['codeId'] as String).trim(),
+      pCodeId: (json['pCodeId'] as String? ?? '').trim(),
+      codeName: (json['codeName'] as String? ?? '').trim(),
     );
   }
 

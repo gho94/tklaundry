@@ -25,15 +25,6 @@ class MemberApi {
     );
   }
 
-  Future<Member> getMember(String userId) async {
-    final body = await _client.get(
-      '/members/${Uri.encodeComponent(userId)}',
-      fallbackMessage: '회원 정보를 불러오지 못했습니다.',
-    );
-
-    return Member.fromJson(body);
-  }
-
   Future<void> updateMember({
     required String userId,
     required String userName,
