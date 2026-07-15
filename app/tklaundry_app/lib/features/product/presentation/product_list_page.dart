@@ -11,6 +11,7 @@ import '../../../shared/widgets/tk_grid_panel.dart';
 import '../../../shared/widgets/tk_grid_table.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
 import '../../code/domain/code.dart';
+import '../../code/presentation/code_list_extensions.dart';
 import '../../code/presentation/code_provider.dart';
 import '../data/product_api.dart';
 import '../domain/product.dart';
@@ -41,35 +42,6 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
   bool _initialized = false;
   bool _isDeleting = false;
   final _productApi = ProductApi();
-
-  List<TkComboItem<String>> _processComboItems(List<Code> codes) {
-    final processes = codes
-        .where((code) => code.pCodeId.trim() == CodeConstants.productProcess)
-        .toList()
-      ..sort((a, b) => a.codeId.compareTo(b.codeId));
-
-    return [
-      for (final process in processes)
-        TkComboItem(value: process.codeId.trim(), label: process.codeName),
-    ];
-  }
-
-  List<TkComboItem<String>> _groupComboItems(
-    List<Code> codes,
-    String? processCode,
-  ) {
-    if (processCode == null || processCode.isEmpty) return const [];
-
-    final groups = codes
-        .where((code) => code.pCodeId.trim() == processCode)
-        .toList()
-      ..sort((a, b) => a.codeId.compareTo(b.codeId));
-
-    return [
-      for (final group in groups)
-        TkComboItem(value: group.codeId.trim(), label: group.codeName),
-    ];
-  }
 
   Future<void> _search({
     required String processCode,
@@ -119,7 +91,7 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
     if (_initialized || processItems.isEmpty) return;
 
     final processCode = processItems.first.value;
-    final groupItems = _groupComboItems(codes, processCode);
+    final groupItems = codes.comboItems(processCode);
     if (groupItems.isEmpty) return;
 
     _initialized = true;
@@ -136,15 +108,6 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
     return price.toString();
   }
 
-  String _lookupCodeName(List<Code> codes, String codeId) {
-    for (final code in codes) {
-      if (code.codeId.trim() == codeId.trim()) {
-        return code.codeName;
-      }
-    }
-    return codeId;
-  }
-
   Future<void> _openRegisterDialog({
     required String processCode,
     required String groupCode,
@@ -154,8 +117,8 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
       context,
       processCode: processCode,
       groupCode: groupCode,
-      processName: _lookupCodeName(codes, processCode),
-      groupName: _lookupCodeName(codes, groupCode),
+      processName: codes.displayName(processCode),
+      groupName: codes.displayName(groupCode),
     );
     if (!mounted || created != true) return;
     await _search(processCode: processCode, groupCode: groupCode);
@@ -172,8 +135,8 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
     final updated = await ProductRegisterDialog.showEdit(
       context,
       product,
-      processName: _lookupCodeName(codes, product.processCode),
-      groupName: _lookupCodeName(codes, product.groupCode),
+      processName: codes.displayName(product.processCode),
+      groupName: codes.displayName(product.groupCode),
     );
     if (!mounted || updated != true) return;
     await _search(processCode: processCode, groupCode: groupCode);
@@ -217,10 +180,10 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(productListProvider);
     final codes = ref.watch(codeProvider);
-    final processItems = _processComboItems(codes);
+    final processItems = codes.comboItems(CodeConstants.productProcess);
     final effectiveProcessCode = _selectedProcessCode ??
         (processItems.isNotEmpty ? processItems.first.value : null);
-    final groupItems = _groupComboItems(codes, effectiveProcessCode);
+    final groupItems = codes.comboItems(effectiveProcessCode ?? '');
     _ensureInitialSearch(processItems, codes);
 
     final effectiveGroupCode = _selectedGroupCode ??
@@ -255,7 +218,7 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
                     ? null
                     : (value) => _onProcessChanged(
                           value,
-                          _groupComboItems(codes, value),
+                          codes.comboItems(value ?? ''),
                         ),
               ),
             ),

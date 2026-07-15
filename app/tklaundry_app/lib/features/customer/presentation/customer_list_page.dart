@@ -11,6 +11,7 @@ import '../../../shared/widgets/tk_grid_panel.dart';
 import '../../../shared/widgets/tk_grid_table.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
 import '../../code/domain/code.dart';
+import '../../code/presentation/code_list_extensions.dart';
 import '../../code/presentation/code_provider.dart';
 import '../data/customer_api.dart';
 import '../domain/customer.dart';
@@ -39,28 +40,6 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
   bool _initialized = false;
   bool _isDeleting = false;
   final _customerApi = CustomerApi();
-
-  List<TkComboItem<String>> _aptComboItems(List<Code> codes) {
-    final apartments = codes
-        .where((code) => code.pCodeId.trim() == CodeConstants.customerApt)
-        .toList()
-      ..sort((a, b) => a.codeId.compareTo(b.codeId));
-
-    return [
-      for (final apt in apartments)
-        TkComboItem(value: apt.codeId.trim(), label: apt.codeName),
-      const TkComboItem(value: '', label: '기타'),
-    ];
-  }
-
-  Map<String, String> _codeNameMap(List<Code> codes) {
-    return {for (final code in codes) code.codeId.trim(): code.codeName};
-  }
-
-  String _lookupCodeName(Map<String, String> codeNames, String codeId) {
-    if (codeId.isEmpty) return '';
-    return codeNames[codeId.trim()] ?? codeId;
-  }
 
   Future<void> _search(String? aptCode) async {
     setState(() {
@@ -128,8 +107,10 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
   Widget build(BuildContext context) {
     final customersAsync = ref.watch(customerListProvider);
     final codes = ref.watch(codeProvider);
-    final codeNames = _codeNameMap(codes);
-    final aptItems = _aptComboItems(codes);
+    final aptItems = codes.comboItems(
+      CodeConstants.customerApt,
+      includeOther: true,
+    );
     _ensureInitialSearch(aptItems);
 
     return Column(
@@ -216,7 +197,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                         columns: _columns,
                         itemCount: customers.length,
                         itemBuilder: (index) =>
-                            _buildRow(codeNames, customers[index]),
+                            _buildRow(codes, customers[index]),
                         selectedRowIndex: _selectedRowIndex,
                         onRowTap: (index) =>
                             setState(() => _selectedRowIndex = index),
@@ -231,13 +212,13 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     );
   }
 
-  List<Widget> _buildRow(Map<String, String> codeNames, Customer customer) {
+  List<Widget> _buildRow(List<Code> codes, Customer customer) {
     return [
       Text(customer.custName),
-      Text(_lookupCodeName(codeNames, customer.aptCode)),
-      Text(_lookupCodeName(codeNames, customer.buildingCode)),
-      Text(_lookupCodeName(codeNames, customer.floorCode)),
-      Text(_lookupCodeName(codeNames, customer.roomCode)),
+      Text(codes.displayName(customer.aptCode)),
+      Text(codes.displayName(customer.buildingCode)),
+      Text(codes.displayName(customer.floorCode)),
+      Text(codes.displayName(customer.roomCode)),
       Text(customer.custPhone),
     ];
   }
