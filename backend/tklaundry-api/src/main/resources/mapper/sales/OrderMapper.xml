@@ -70,6 +70,20 @@
         )
     </insert>
 
+    <update id="updateOrderMaster">
+        UPDATE OrderMaster
+        SET OrderDate = #{orderDate},
+            CustCode = #{custCode},
+            Qty = #{qty},
+            Discount = #{discount},
+            Cost = #{cost},
+            BankingYn = #{bankingYn},
+            Status = #{status},
+            UpdateDate = GETDATE(),
+            UpdateUserID = #{updateUserId}
+        WHERE OrderNo = #{orderNo}
+    </update>
+
     <insert id="insertOrderDetails">
         INSERT INTO OrderDetail (
             OrderNo,
@@ -98,5 +112,17 @@
             )
         </foreach>
     </insert>
+
+    <delete id="deleteOrderDetails">
+        DELETE FROM OrderDetail
+        WHERE OrderNo = #{orderNo}
+    </delete>
+
+    <select id="countCompletedOrderDetail" resultType="int">
+        SELECT COUNT(*)
+        FROM OrderDetail
+        WHERE OrderNo = #{orderNo}
+          AND CompleteYn = 'Y'
+    </select>
 
 </mapper>

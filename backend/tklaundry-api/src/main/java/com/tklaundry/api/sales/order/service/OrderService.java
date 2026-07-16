@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.tklaundry.api.common.AutoNumberDoc;
 import com.tklaundry.api.common.CommonInfo;
 import com.tklaundry.api.common.service.IAutoNumberService;
+import com.tklaundry.api.common.web.ApiErrorCode;
+import com.tklaundry.api.common.web.ApiException;
 import com.tklaundry.api.sales.order.dto.OrderDetailRequest;
 import com.tklaundry.api.sales.order.dto.OrderListResponse;
 import com.tklaundry.api.sales.order.dto.OrderRequest;
@@ -48,18 +50,63 @@ public class OrderService implements IOrderService {
 	@Transactional
 	public OrderMaster registerOrder(OrderRequest request) {
 		String orderNo = autoNumberService.nextDocumentNo(AutoNumberDoc.ORDER);
+		List<OrderDetail> orderDetails = createOrderDetails(orderNo, request.getDetails());
 
+		OrderMaster orderMaster = OrderMaster.builder()
+				.orderNo(orderNo)
+				.orderDate(request.getOrderDate())
+				.custCode(request.getCustCode())
+				.qty(orderDetails.stream().mapToInt(OrderDetail::getQty).sum())
+				.discount(orderDetails.stream().mapToInt(OrderDetail::getDiscount).sum())
+				.cost(orderDetails.stream().mapToInt(OrderDetail::getCost).sum())
+				.status(request.getStatus())
+				.bankingYn(request.getBankingYn())
+				.completeYn("N")
+				.insertUserId(commonInfo.getUser().getUserId())
+				.build();
+
+		orderMapper.insertOrderMaster(orderMaster);
+		orderMapper.insertOrderDetails(orderDetails);
+
+		// 선불 시 SalesMaster/Detail 자동 생성 — 매출 단계에서 구현
+
+		return orderMaster;
+	}
+
+	@Override
+	@Transactional
+	public void updateOrder(String orderNo, OrderRequest request) {
+		if (orderMapper.countCompletedOrderDetail(orderNo) > 0) {
+			throw new ApiException(ApiErrorCode.CONFLICT, "출고된 내역이 있어서 수정이 불가합니다.");
+		}
+
+		List<OrderDetail> orderDetails = createOrderDetails(orderNo, request.getDetails());
+
+		OrderMaster orderMaster = OrderMaster.builder()
+				.orderNo(orderNo)
+				.orderDate(request.getOrderDate())
+				.custCode(request.getCustCode())
+				.qty(orderDetails.stream().mapToInt(OrderDetail::getQty).sum())
+				.discount(orderDetails.stream().mapToInt(OrderDetail::getDiscount).sum())
+				.cost(orderDetails.stream().mapToInt(OrderDetail::getCost).sum())
+				.status(request.getStatus())
+				.bankingYn(request.getBankingYn())
+				.updateUserId(commonInfo.getUser().getUserId())
+				.build();
+
+		orderMapper.updateOrderMaster(orderMaster);
+		orderMapper.deleteOrderDetails(orderNo);
+		orderMapper.insertOrderDetails(orderDetails);
+
+		// 선불 변경 시 SalesMaster/Detail 동기화 — 매출 단계에서 구현
+	}
+
+	private List<OrderDetail> createOrderDetails(String orderNo, List<OrderDetailRequest> details) {
 		List<OrderDetail> orderDetails = new ArrayList<>();
-		int totalQty = 0;
-		int totalDiscount = 0;
-		int totalCost = 0;
 		int orderSeq = 1;
 
-		for (OrderDetailRequest orderDetail : request.getDetails()) {
+		for (OrderDetailRequest orderDetail : details) {
 			int cost = orderDetail.getPrice() * orderDetail.getQty() - orderDetail.getDiscount();
-			totalQty += orderDetail.getQty();
-			totalDiscount += orderDetail.getDiscount();
-			totalCost += cost;
 
 			orderDetails.add(OrderDetail.builder()
 					.orderNo(orderNo)
@@ -75,25 +122,7 @@ public class OrderService implements IOrderService {
 					.build());
 		}
 
-		OrderMaster orderMaster = OrderMaster.builder()
-				.orderNo(orderNo)
-				.orderDate(request.getOrderDate())
-				.custCode(request.getCustCode())
-				.qty(totalQty)
-				.discount(totalDiscount)
-				.cost(totalCost)
-				.status(request.getStatus())
-				.bankingYn(request.getBankingYn())
-				.completeYn("N")
-				.insertUserId(commonInfo.getUser().getUserId())
-				.build();
-
-		orderMapper.insertOrderMaster(orderMaster);
-		orderMapper.insertOrderDetails(orderDetails);
-
-		// 선불 시 SalesMaster/Detail 자동 생성 — 매출 단계에서 구현
-
-		return orderMaster;
+		return orderDetails;
 	}
 
 }

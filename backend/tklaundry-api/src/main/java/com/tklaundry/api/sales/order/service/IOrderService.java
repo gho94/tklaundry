@@ -16,4 +16,6 @@ public interface IOrderService {
 
 	OrderMaster registerOrder(OrderRequest request);
 
+	void updateOrder(String orderNo, OrderRequest request);
+
 }

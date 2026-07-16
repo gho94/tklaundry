@@ -21,6 +21,12 @@ public interface OrderMapper {
 
 	void insertOrderMaster(OrderMaster orderMaster);
 
+	void updateOrderMaster(OrderMaster orderMaster);
+
 	void insertOrderDetails(@Param("orderDetails") List<OrderDetail> orderDetails);
+
+	void deleteOrderDetails(@Param("orderNo") String orderNo);
+
+	int countCompletedOrderDetail(@Param("orderNo") String orderNo);
 
 }
