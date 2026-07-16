@@ -76,9 +76,7 @@ public class OrderService implements IOrderService {
 	@Override
 	@Transactional
 	public void updateOrder(String orderNo, OrderRequest request) {
-		if (orderMapper.countCompletedOrderDetail(orderNo) > 0) {
-			throw new ApiException(ApiErrorCode.CONFLICT, "출고된 내역이 있어서 수정이 불가합니다.");
-		}
+		ensureOrderEditable(orderNo);
 
 		List<OrderDetail> orderDetails = createOrderDetails(orderNo, request.getDetails());
 
@@ -99,6 +97,23 @@ public class OrderService implements IOrderService {
 		orderMapper.insertOrderDetails(orderDetails);
 
 		// 선불 변경 시 SalesMaster/Detail 동기화 — 매출 단계에서 구현
+	}
+
+	@Override
+	@Transactional
+	public void removeOrder(String orderNo) {
+		ensureOrderEditable(orderNo);
+
+		// 선불 연결 SalesMaster/Detail 삭제 — 매출 단계에서 구현
+
+		orderMapper.deleteOrderDetails(orderNo);
+		orderMapper.deleteOrderMaster(orderNo);
+	}
+
+	private void ensureOrderEditable(String orderNo) {
+		if (orderMapper.countCompletedOrderDetail(orderNo) > 0) {
+			throw new ApiException(ApiErrorCode.CONFLICT, "출고된 내역이 있어서 수정이 불가합니다.");
+		}
 	}
 
 	private List<OrderDetail> createOrderDetails(String orderNo, List<OrderDetailRequest> details) {

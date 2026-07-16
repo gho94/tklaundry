@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,6 +54,12 @@ public class OrderController {
 			@PathVariable String orderNo,
 			@RequestBody OrderRequest request) {
 		orderService.updateOrder(orderNo, request);
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/{orderNo}")
+	public ResponseEntity<Void> removeOrder(@PathVariable String orderNo) {
+		orderService.removeOrder(orderNo);
 		return ResponseEntity.noContent().build();
 	}
 

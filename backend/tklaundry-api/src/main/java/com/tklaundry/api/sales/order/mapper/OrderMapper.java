@@ -27,6 +27,8 @@ public interface OrderMapper {
 
 	void deleteOrderDetails(@Param("orderNo") String orderNo);
 
+	void deleteOrderMaster(@Param("orderNo") String orderNo);
+
 	int countCompletedOrderDetail(@Param("orderNo") String orderNo);
 
 }

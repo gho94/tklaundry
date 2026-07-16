@@ -118,6 +118,11 @@
         WHERE OrderNo = #{orderNo}
     </delete>
 
+    <delete id="deleteOrderMaster">
+        DELETE FROM OrderMaster
+        WHERE OrderNo = #{orderNo}
+    </delete>
+
     <select id="countCompletedOrderDetail" resultType="int">
         SELECT COUNT(*)
         FROM OrderDetail

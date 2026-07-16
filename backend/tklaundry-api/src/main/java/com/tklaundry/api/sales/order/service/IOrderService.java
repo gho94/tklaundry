@@ -18,4 +18,6 @@ public interface IOrderService {
 
 	void updateOrder(String orderNo, OrderRequest request);
 
+	void removeOrder(String orderNo);
+
 }
