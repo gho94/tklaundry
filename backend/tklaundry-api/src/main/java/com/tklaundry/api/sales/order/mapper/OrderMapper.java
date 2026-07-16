@@ -19,4 +19,8 @@ public interface OrderMapper {
 
 	List<OrderDetail> selectOrderDetailList(@Param("orderNo") String orderNo);
 
+	void insertOrderMaster(OrderMaster orderMaster);
+
+	void insertOrderDetails(@Param("orderDetails") List<OrderDetail> orderDetails);
+
 }

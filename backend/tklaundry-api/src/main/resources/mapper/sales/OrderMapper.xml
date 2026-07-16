@@ -42,4 +42,61 @@
         ORDER BY OrderSeq
     </select>
 
+    <insert id="insertOrderMaster">
+        INSERT INTO OrderMaster (
+            OrderNo,
+            OrderDate,
+            CustCode,
+            Qty,
+            Discount,
+            Cost,
+            BankingYn,
+            Status,
+            CompleteYn,
+            InsertDate,
+            InsertUserID
+        ) VALUES (
+            #{orderNo},
+            #{orderDate},
+            #{custCode},
+            #{qty},
+            #{discount},
+            #{cost},
+            #{bankingYn},
+            #{status},
+            #{completeYn},
+            GETDATE(),
+            #{insertUserId}
+        )
+    </insert>
+
+    <insert id="insertOrderDetails">
+        INSERT INTO OrderDetail (
+            OrderNo,
+            OrderSeq,
+            ProductCode,
+            ProcessCode,
+            Price,
+            Qty,
+            Discount,
+            Cost,
+            CompleteYn,
+            Remark
+        ) VALUES
+        <foreach collection="orderDetails" item="orderDetail" separator=",">
+            (
+                #{orderDetail.orderNo},
+                #{orderDetail.orderSeq},
+                #{orderDetail.productCode},
+                #{orderDetail.processCode},
+                #{orderDetail.price},
+                #{orderDetail.qty},
+                #{orderDetail.discount},
+                #{orderDetail.cost},
+                #{orderDetail.completeYn},
+                #{orderDetail.remark}
+            )
+        </foreach>
+    </insert>
+
 </mapper>
