@@ -10,6 +10,12 @@
 | 형식 | JSON (`application/json; charset=utf-8`) |
 | 추적 ID | `X-Request-Id` (없으면 서버 생성, 응답에도 포함) |
 
+### Controller 쿼리·경로 파라미터 (구현)
+
+- `@RequestParam`·`@PathVariable`에는 HTTP 이름을 **annotation에 반드시 명시**한다.
+- `@RequestBody`만 쓰는 API(등록·수정 body)는 해당 없음.
+- 상세·예시·Gradle `-parameters`: [`02_아키텍처.md`](02_아키텍처.md) § Controller 파라미터 바인딩
+
 ### 등록·수정·삭제 응답 (1단계 현행)
 
 | Method | 성공 HTTP | body |

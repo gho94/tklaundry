@@ -30,20 +30,20 @@ public class MemberController {
 	}
 
 	@GetMapping("/exists")
-	public ResponseEntity<Boolean> existsUserId(@RequestParam String userId) {
+	public ResponseEntity<Boolean> existsUserId(@RequestParam("userId") String userId) {
 		return ResponseEntity.ok(comMemberService.existsUserId(userId));
 	}
 
 	@PutMapping("/{userId}")
 	public ResponseEntity<Void> updateMember(
-			@PathVariable String userId,
+			@PathVariable("userId") String userId,
 			@RequestBody ComMember request) {
 		comMemberService.updateMember(userId, request);
 		return ResponseEntity.noContent().build();
 	}
 
 	@DeleteMapping("/{userId}")
-	public ResponseEntity<Void> removeMember(@PathVariable String userId) {
+	public ResponseEntity<Void> removeMember(@PathVariable("userId") String userId) {
 		comMemberService.removeMember(userId);
 		return ResponseEntity.noContent().build();
 	}

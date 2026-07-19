@@ -39,14 +39,14 @@ public class CodeController {
 
 	@PutMapping("/{codeId}")
 	public ResponseEntity<Void> updateCode(
-			@PathVariable String codeId,
+			@PathVariable("codeId") String codeId,
 			@RequestBody ComBaseData request) {
 		comBaseDataService.updateCode(codeId, request);
 		return ResponseEntity.noContent().build();
 	}
 
 	@DeleteMapping("/{codeId}")
-	public ResponseEntity<Void> deleteCode(@PathVariable String codeId) {
+	public ResponseEntity<Void> deleteCode(@PathVariable("codeId") String codeId) {
 		comBaseDataService.deleteCode(codeId);
 		return ResponseEntity.noContent().build();
 	}

@@ -28,7 +28,7 @@ public class CustomerController {
 
 	@GetMapping
 	public ResponseEntity<List<ComCustomer>> listCustomers(
-			@RequestParam(required = false) String aptCode) {
+			@RequestParam(value = "aptCode", required = false) String aptCode) {
 		return ResponseEntity.ok(comCustomerService.listCustomers(aptCode));
 	}
 
@@ -40,14 +40,14 @@ public class CustomerController {
 
 	@PutMapping("/{custCode}")
 	public ResponseEntity<Void> updateCustomer(
-			@PathVariable String custCode,
+			@PathVariable("custCode") String custCode,
 			@RequestBody ComCustomer request) {
 		comCustomerService.updateCustomer(custCode, request);
 		return ResponseEntity.noContent().build();
 	}
 
 	@DeleteMapping("/{custCode}")
-	public ResponseEntity<Void> removeCustomer(@PathVariable String custCode) {
+	public ResponseEntity<Void> removeCustomer(@PathVariable("custCode") String custCode) {
 		comCustomerService.removeCustomer(custCode);
 		return ResponseEntity.noContent().build();
 	}

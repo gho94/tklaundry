@@ -28,8 +28,8 @@ public class ProductController {
 
 	@GetMapping
 	public ResponseEntity<List<ComProduct>> listProducts(
-			@RequestParam String processCode,
-			@RequestParam String groupCode) {
+			@RequestParam("processCode") String processCode,
+			@RequestParam("groupCode") String groupCode) {
 		return ResponseEntity.ok(comProductService.listProducts(processCode, groupCode));
 	}
 
@@ -41,14 +41,14 @@ public class ProductController {
 
 	@PutMapping("/{productCode}")
 	public ResponseEntity<Void> updateProduct(
-			@PathVariable String productCode,
+			@PathVariable("productCode") String productCode,
 			@RequestBody ComProduct request) {
 		comProductService.updateProduct(productCode, request);
 		return ResponseEntity.noContent().build();
 	}
 
 	@DeleteMapping("/{productCode}")
-	public ResponseEntity<Void> removeProduct(@PathVariable String productCode) {
+	public ResponseEntity<Void> removeProduct(@PathVariable("productCode") String productCode) {
 		comProductService.removeProduct(productCode);
 		return ResponseEntity.noContent().build();
 	}
