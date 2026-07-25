@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../shared/utils/tk_format.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../shared/widgets/tk_async_error_body.dart';
-import '../../../shared/widgets/tk_grid_panel.dart';
-import '../../../shared/widgets/tk_grid_table.dart';
+import '../../../shared/utils/tk_feedback.dart';
+import '../../../shared/utils/tk_format.dart';
 import '../../../shared/widgets/lookup/tk_lookup_field.dart';
 import '../../../shared/widgets/lookup/tk_lookup_item.dart';
+import '../../../shared/widgets/tk_async_error_body.dart';
+import '../../../shared/widgets/tk_confirm_dialog.dart';
+import '../../../shared/widgets/tk_grid_panel.dart';
+import '../../../shared/widgets/tk_grid_table.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
 import '../../../shared/widgets/tk_text_field.dart';
 import '../../code/domain/code.dart';
@@ -16,10 +19,12 @@ import '../../code/presentation/code_provider.dart';
 import '../../customer/data/customer_api.dart';
 import '../../customer/domain/customer.dart';
 import '../../product/data/product_api.dart';
+import '../data/order_api.dart';
 import '../domain/order.dart';
 import '../domain/order_detail.dart';
 import '../domain/order_list_result.dart';
 import 'order_provider.dart';
+import 'order_register_dialog.dart';
 
 class OrderListPage extends ConsumerStatefulWidget {
   const OrderListPage({super.key});
@@ -64,8 +69,10 @@ class _OrderListPageState extends ConsumerState<OrderListPage> {
 
   final _customerApi = CustomerApi();
   final _productApi = ProductApi();
+  final _orderApi = OrderApi();
   late final TextEditingController _startDateController;
   late final TextEditingController _endDateController;
+  bool _isDeleting = false;
 
   @override
   void initState() {
@@ -142,6 +149,123 @@ class _OrderListPageState extends ConsumerState<OrderListPage> {
             custCode: _selectedCustCode,
           ),
         );
+  }
+
+  Future<void> _openRegisterDialog() async {
+    // 레거시 FrmOrderView: 목록에서 고객 선택 후에만 등록 화면 진입.
+    final custCode = _selectedCustCode;
+    if (custCode == null || custCode.isEmpty) {
+      context.showTkMessage('고객을 선택해 주세요.');
+      return;
+    }
+
+    final customer = _customerByCode[custCode];
+    if (customer == null) {
+      context.showTkMessage('고객을 선택해 주세요.');
+      return;
+    }
+
+    final created = await OrderRegisterDialog.showCreate(
+      context,
+      customer: customer,
+    );
+    if (!mounted || created != true) return;
+    await _search();
+    if (!mounted) return;
+    context.showTkMessage('접수가 등록되었습니다.');
+  }
+
+  bool _hasCompletedDetail(List<OrderDetail> details) {
+    return details.any((detail) => detail.completeYn == 'Y');
+  }
+
+  Future<void> _openEditDialog(Order order) async {
+    List<OrderDetail> details;
+    try {
+      details = await _orderApi.listOrderDetails(order.orderNo);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      context.showTkApiError(error);
+      return;
+    }
+
+    if (!mounted) return;
+
+    // 레거시: 출고된 상세가 있으면 수정 불가.
+    if (_hasCompletedDetail(details)) {
+      context.showTkMessage('출고된 내역이 있어서 수정이 불가합니다.');
+      return;
+    }
+
+    final customer = _customerByCode[order.custCode] ??
+        Customer(
+          custCode: order.custCode,
+          custName: _customerName(order.custCode),
+          aptCode: '',
+          buildingCode: '',
+          floorCode: '',
+          roomCode: '',
+          custPhone: '',
+        );
+
+    final result = await OrderRegisterDialog.showEdit(
+      context,
+      customer: customer,
+      order: order,
+      details: details,
+      productNames: _productNameByCode,
+    );
+    if (!mounted || result == null || result == false) return;
+
+    await _search();
+    if (!mounted) return;
+
+    if (result == OrderFormResult.deleted) {
+      context.showTkMessage('접수가 삭제되었습니다.');
+    } else {
+      context.showTkMessage('접수가 수정되었습니다.');
+    }
+  }
+
+  Future<void> _deleteSelected(Order order) async {
+    List<OrderDetail> details;
+    try {
+      details = await _orderApi.listOrderDetails(order.orderNo);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      context.showTkApiError(error);
+      return;
+    }
+
+    if (!mounted) return;
+
+    if (_hasCompletedDetail(details)) {
+      context.showTkMessage('출고된 내역이 있어서 삭제가 불가합니다.');
+      return;
+    }
+
+    final confirmed = await showTkConfirmDialog(
+      context,
+      title: '접수 삭제',
+      message: '선택한 접수를 삭제하시겠습니까?',
+    );
+    if (!confirmed || !mounted) return;
+
+    setState(() => _isDeleting = true);
+    try {
+      await _orderApi.deleteOrder(order.orderNo);
+      if (!mounted) return;
+      await _search();
+      if (!mounted) return;
+      context.showTkMessage('접수가 삭제되었습니다.');
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      context.showTkApiError(error);
+    } finally {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+      }
+    }
   }
 
   void _ensureInitialSearch() {
@@ -256,6 +380,30 @@ class _OrderListPageState extends ConsumerState<OrderListPage> {
             ),
             const Spacer(),
             TkPrimaryButton(
+              label: '등록',
+              variant: TkButtonVariant.outline,
+              icon: Icons.add,
+              onPressed: !_customersReady ? null : _openRegisterDialog,
+            ),
+            const SizedBox(width: 8),
+            TkPrimaryButton(
+              label: '삭제',
+              variant: TkButtonVariant.outline,
+              icon: Icons.delete_outline,
+              isLoading: _isDeleting,
+              onPressed: _isDeleting || _selectedRowIndex == null
+                  ? null
+                  : () {
+                      final orders = orderListAsync.asData?.value.items;
+                      if (orders == null ||
+                          _selectedRowIndex! >= orders.length) {
+                        return;
+                      }
+                      _deleteSelected(orders[_selectedRowIndex!]);
+                    },
+            ),
+            const SizedBox(width: 8),
+            TkPrimaryButton(
               label: '조회',
               variant: TkButtonVariant.outline,
               icon: Icons.search,
@@ -289,6 +437,13 @@ class _OrderListPageState extends ConsumerState<OrderListPage> {
                           _selectedRowIndex = index;
                           _selectedOrderNo = order.orderNo;
                         });
+                      },
+                      onRowDoubleTap: (index) {
+                        setState(() {
+                          _selectedRowIndex = index;
+                          _selectedOrderNo = result.items[index].orderNo;
+                        });
+                        _openEditDialog(result.items[index]);
                       },
                     ),
                   ),
