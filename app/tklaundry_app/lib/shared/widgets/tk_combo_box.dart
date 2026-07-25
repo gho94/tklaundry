@@ -114,7 +114,13 @@ class _TkComboBoxState<T> extends State<TkComboBox<T>> {
     }
 
     _focusNode.requestFocus();
-    _openOverlay();
+    // 클릭 제스처가 끝난 뒤 열어, 같은 포인터로 즉시 닫히는 레이스를 막는다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !widget.enabled || _overlay == null) return;
+      if (!_focusNode.hasFocus) return;
+      if (_overlay!.isShowing) return;
+      _openOverlay();
+    });
   }
 
   void _openOverlay() {
@@ -153,30 +159,37 @@ class _TkComboBoxState<T> extends State<TkComboBox<T>> {
 
     return tkDropdownAnchorField(
       layerLink: overlay?.layerLink ?? LayerLink(),
+      tapRegionGroup: overlay?.tapRegionGroup ?? this,
       child: Focus(
         key: _fieldKey,
         focusNode: _focusNode,
-        child: InputDecorator(
-          isFocused: _focusNode.hasFocus || isOpen,
-          isEmpty: displayText.isEmpty,
-          decoration: tkDropdownDecoration(
-            label: widget.label,
-            hint: widget.hint,
-            errorText: widget.errorText,
-            compact: widget.compact,
-            enabled: widget.enabled,
-          ),
-          child: InkWell(
+        child: MouseRegion(
+          cursor: widget.enabled
+              ? SystemMouseCursors.click
+              : SystemMouseCursors.basic,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: widget.enabled ? _toggleOverlay : null,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                displayText,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textPrimary,
-                    ),
+            child: InputDecorator(
+              isFocused: _focusNode.hasFocus || isOpen,
+              isEmpty: displayText.isEmpty,
+              decoration: tkDropdownDecoration(
+                label: widget.label,
+                hint: widget.hint,
+                errorText: widget.errorText,
+                compact: widget.compact,
+                enabled: widget.enabled,
+              ),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  displayText.isEmpty ? ' ' : displayText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                ),
               ),
             ),
           ),

@@ -11,8 +11,14 @@
             ProductName AS productName,
             Price       AS price
         FROM ComProduct
-        WHERE ProcessCode = #{processCode}
-          AND GroupCode = #{groupCode}
+        <where>
+            <if test="processCode != null and processCode != ''">
+                AND ProcessCode = #{processCode}
+            </if>
+            <if test="groupCode != null and groupCode != ''">
+                AND GroupCode = #{groupCode}
+            </if>
+        </where>
         ORDER BY ProductCode
     </select>
 

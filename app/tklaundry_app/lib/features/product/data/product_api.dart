@@ -7,15 +7,20 @@ class ProductApi {
   final ApiClient _client;
 
   Future<List<Product>> listProducts({
-    required String processCode,
-    required String groupCode,
+    String? processCode,
+    String? groupCode,
   }) async {
+    final queryParameters = <String, String>{};
+    if (processCode != null && processCode.isNotEmpty) {
+      queryParameters['processCode'] = processCode;
+    }
+    if (groupCode != null && groupCode.isNotEmpty) {
+      queryParameters['groupCode'] = groupCode;
+    }
+
     final body = await _client.getList(
       '/products',
-      queryParameters: {
-        'processCode': processCode,
-        'groupCode': groupCode,
-      },
+      queryParameters: queryParameters.isEmpty ? null : queryParameters,
       fallbackMessage: '제품 목록을 불러오지 못했습니다.',
     );
 

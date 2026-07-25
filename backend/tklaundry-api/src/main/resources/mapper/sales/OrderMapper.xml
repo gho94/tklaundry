@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tklaundry.api.sales.order.mapper.OrderMapper">
+
+    <select id="selectOrderMasterList" resultType="com.tklaundry.api.sales.order.model.OrderMaster">
+        SELECT
+            OrderNo       AS orderNo,
+            OrderDate     AS orderDate,
+            CustCode      AS custCode,
+            Qty           AS qty,
+            Discount      AS discount,
+            Cost          AS cost,
+            Status        AS status,
+            DeliveryDate  AS deliveryDate,
+            BankingYn     AS bankingYn,
+            CompleteYn    AS completeYn
+        FROM OrderMaster
+        <where>
+            <if test="custCode != null and custCode != ''">
+                AND CustCode = #{custCode}
+            </if>
+            AND OrderDate BETWEEN #{startDate} AND #{endDate}
+        </where>
+        ORDER BY OrderDate DESC, OrderNo DESC
+    </select>
+
+    <select id="selectOrderDetailList" resultType="com.tklaundry.api.sales.order.model.OrderDetail">
+        SELECT
+            OrderNo       AS orderNo,
+            OrderSeq      AS orderSeq,
+            ProductCode   AS productCode,
+            ProcessCode   AS processCode,
+            Price         AS price,
+            Qty           AS qty,
+            Discount      AS discount,
+            Cost          AS cost,
+            CompleteYn    AS completeYn,
+            Remark        AS remark
+        FROM OrderDetail
+        WHERE OrderNo = #{orderNo}
+        ORDER BY OrderSeq
+    </select>
+
+    <insert id="insertOrderMaster">
+        INSERT INTO OrderMaster (
+            OrderNo,
+            OrderDate,
+            CustCode,
+            Qty,
+            Discount,
+            Cost,
+            BankingYn,
+            Status,
+            CompleteYn,
+            InsertDate,
+            InsertUserID
+        ) VALUES (
+            #{orderNo},
+            #{orderDate},
+            #{custCode},
+            #{qty},
+            #{discount},
+            #{cost},
+            #{bankingYn},
+            #{status},
+            #{completeYn},
+            GETDATE(),
+            #{insertUserId}
+        )
+    </insert>
+
+    <update id="updateOrderMaster">
+        UPDATE OrderMaster
+        SET OrderDate = #{orderDate},
+            CustCode = #{custCode},
+            Qty = #{qty},
+            Discount = #{discount},
+            Cost = #{cost},
+            BankingYn = #{bankingYn},
+            Status = #{status},
+            UpdateDate = GETDATE(),
+            UpdateUserID = #{updateUserId}
+        WHERE OrderNo = #{orderNo}
+    </update>
+
+    <insert id="insertOrderDetails">
+        INSERT INTO OrderDetail (
+            OrderNo,
+            OrderSeq,
+            ProductCode,
+            ProcessCode,
+            Price,
+            Qty,
+            Discount,
+            Cost,
+            CompleteYn,
+            Remark
+        ) VALUES
+        <foreach collection="orderDetails" item="orderDetail" separator=",">
+            (
+                #{orderDetail.orderNo},
+                #{orderDetail.orderSeq},
+                #{orderDetail.productCode},
+                #{orderDetail.processCode},
+                #{orderDetail.price},
+                #{orderDetail.qty},
+                #{orderDetail.discount},
+                #{orderDetail.cost},
+                #{orderDetail.completeYn},
+                #{orderDetail.remark}
+            )
+        </foreach>
+    </insert>
+
+    <delete id="deleteOrderDetails">
+        DELETE FROM OrderDetail
+        WHERE OrderNo = #{orderNo}
+    </delete>
+
+    <delete id="deleteOrderMaster">
+        DELETE FROM OrderMaster
+        WHERE OrderNo = #{orderNo}
+    </delete>
+
+    <select id="countCompletedOrderDetail" resultType="int">
+        SELECT COUNT(*)
+        FROM OrderDetail
+        WHERE OrderNo = #{orderNo}
+          AND CompleteYn = 'Y'
+    </select>
+
+</mapper>

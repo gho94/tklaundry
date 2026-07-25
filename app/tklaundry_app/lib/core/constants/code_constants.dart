@@ -5,4 +5,5 @@ class CodeConstants {
   static const customerFloor = 'A10002'; // 고객관리 > 층
   static const customerRoom = 'A10003'; // 고객관리 > 호
   static const productProcess = 'B10002'; // 제품관리 > 공정
+  static const paymentStatus = 'B10001'; // 결제 구분
 }
