@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/code_constants.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../shared/utils/tk_format.dart';
 import '../../../shared/utils/tk_feedback.dart';
 import '../../../shared/widgets/tk_async_error_body.dart';
 import '../../../shared/widgets/tk_confirm_dialog.dart';
@@ -105,7 +106,7 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
 
   String _formatPrice(int? price) {
     if (price == null) return '';
-    return price.toString();
+    return price.formatted;
   }
 
   Future<void> _openRegisterDialog({

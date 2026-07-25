@@ -32,14 +32,14 @@ public class OrderController {
 
 	@GetMapping
 	public ResponseEntity<OrderListResponse> listOrders(
-			@RequestParam(required = false) LocalDate startDate,
-			@RequestParam(required = false) LocalDate endDate,
-			@RequestParam(required = false) String custCode) {
+			@RequestParam(value = "startDate", required = false) LocalDate startDate,
+			@RequestParam(value = "endDate", required = false) LocalDate endDate,
+			@RequestParam(value = "custCode", required = false) String custCode) {
 		return ResponseEntity.ok(orderService.listOrders(startDate, endDate, custCode));
 	}
 
 	@GetMapping("/{orderNo}")
-	public ResponseEntity<List<OrderDetail>> listOrderDetails(@PathVariable String orderNo) {
+	public ResponseEntity<List<OrderDetail>> listOrderDetails(@PathVariable("orderNo") String orderNo) {
 		return ResponseEntity.ok(orderService.listOrderDetails(orderNo));
 	}
 
@@ -51,14 +51,14 @@ public class OrderController {
 
 	@PutMapping("/{orderNo}")
 	public ResponseEntity<Void> updateOrder(
-			@PathVariable String orderNo,
+			@PathVariable("orderNo") String orderNo,
 			@RequestBody OrderRequest request) {
 		orderService.updateOrder(orderNo, request);
 		return ResponseEntity.noContent().build();
 	}
 
 	@DeleteMapping("/{orderNo}")
-	public ResponseEntity<Void> removeOrder(@PathVariable String orderNo) {
+	public ResponseEntity<Void> removeOrder(@PathVariable("orderNo") String orderNo) {
 		orderService.removeOrder(orderNo);
 		return ResponseEntity.noContent().build();
 	}

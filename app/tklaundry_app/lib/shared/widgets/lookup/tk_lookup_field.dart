@@ -1,26 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'tk_dropdown_panel.dart';
-
-class TkLookupItem<T> {
-  const TkLookupItem({
-    required this.value,
-    required this.label,
-    this.subtitle,
-  });
-
-  final T value;
-  final String label;
-  final String? subtitle;
-
-  bool matches(String query) {
-    if (query.isEmpty) return true;
-    final q = query.toLowerCase();
-    if (label.toLowerCase().contains(q)) return true;
-    if (subtitle != null && subtitle!.toLowerCase().contains(q)) return true;
-    return false;
-  }
-}
+import '../tk_dropdown_panel.dart';
+import 'tk_lookup_item.dart';
+import 'tk_lookup_panel.dart';
 
 class TkLookupField<T> extends StatefulWidget {
   const TkLookupField({
@@ -32,6 +14,9 @@ class TkLookupField<T> extends StatefulWidget {
     this.errorText,
     this.enabled = true,
     this.showAllOption = true,
+    this.primaryColumnLabel = '항목',
+    this.secondaryColumnLabel,
+    this.panelMinWidth = 320,
     this.onChanged,
   });
 
@@ -42,7 +27,14 @@ class TkLookupField<T> extends StatefulWidget {
   final String? errorText;
   final bool enabled;
   final bool showAllOption;
+
+  /// [secondaryColumnLabel]이 있으면 2열 그리드 lookup 패널 사용.
+  final String primaryColumnLabel;
+  final String? secondaryColumnLabel;
+  final double panelMinWidth;
   final ValueChanged<T?>? onChanged;
+
+  bool get _useGridPanel => secondaryColumnLabel != null;
 
   @override
   State<TkLookupField<T>> createState() => _TkLookupFieldState<T>();
@@ -117,7 +109,7 @@ class _TkLookupFieldState<T> extends State<TkLookupField<T>> {
     if (_ignoreFocusLoss) return;
 
     if (_focusNode.hasFocus) {
-      _filterQuery = '';
+      _filterQuery = _controller.text;
       _openOverlay();
     } else if (_overlay?.isShowing != true) {
       _filterQuery = '';
@@ -179,15 +171,19 @@ class _TkLookupFieldState<T> extends State<TkLookupField<T>> {
     _selectAll();
   }
 
+  double _panelWidth(double fieldWidth) {
+    return fieldWidth < widget.panelMinWidth ? widget.panelMinWidth : fieldWidth;
+  }
+
   void _openOverlay() {
     final overlay = _overlay;
     if (overlay == null || !mounted) return;
 
     final renderBox = _fieldKey.currentContext?.findRenderObject() as RenderBox?;
-    final width = renderBox?.size.width ?? 300;
+    final fieldWidth = renderBox?.size.width ?? 300;
 
     overlay.show(
-      width: width,
+      width: _panelWidth(fieldWidth),
       offsetY: tkDropdownOffsetY(fieldKey: _fieldKey, compact: false),
       panelBuilder: _buildPanel,
       onHide: _onOverlayDismissed,
@@ -196,16 +192,34 @@ class _TkLookupFieldState<T> extends State<TkLookupField<T>> {
   }
 
   Widget _buildPanel() {
-    final width = (_fieldKey.currentContext?.findRenderObject() as RenderBox?)?.size.width ?? 300;
+    final renderBox = _fieldKey.currentContext?.findRenderObject() as RenderBox?;
+    final fieldWidth = renderBox?.size.width ?? 300;
+    final panelWidth = _panelWidth(fieldWidth);
+    final filtered = _filteredItems;
+
+    if (widget._useGridPanel) {
+      return TkLookupGridPanel<T>(
+        width: panelWidth,
+        items: filtered,
+        query: _filterQuery,
+        selectedValue: widget.value,
+        primaryColumnLabel: widget.primaryColumnLabel,
+        secondaryColumnLabel: widget.secondaryColumnLabel!,
+        showAllOption: widget.showAllOption,
+        allSelected: widget.value == null,
+        onAllTap: _selectAll,
+        onItemTap: _selectItem,
+      );
+    }
 
     return TkDropdownPanel(
-      width: width,
+      width: panelWidth,
       showAllOption: widget.showAllOption,
       allSelected: widget.value == null,
       onAllTap: _selectAll,
       emptyMessage: '검색 결과가 없습니다.',
       children: [
-        for (final item in _filteredItems)
+        for (final item in filtered)
           TkDropdownTile(
             label: item.label,
             subtitle: item.subtitle,
@@ -228,7 +242,7 @@ class _TkLookupFieldState<T> extends State<TkLookupField<T>> {
         focusNode: _focusNode,
         enabled: widget.enabled,
         onTap: () {
-          _filterQuery = '';
+          _filterQuery = _controller.text;
           _focusNode.requestFocus();
         },
         onTapOutside: (_) {

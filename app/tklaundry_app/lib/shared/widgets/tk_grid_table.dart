@@ -220,7 +220,7 @@ class _HeaderCell extends StatelessWidget {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Align(
-        alignment: _alignment(column.align, column.numeric),
+        alignment: Alignment.center,
         child: Text(
           column.label,
           style: const TextStyle(

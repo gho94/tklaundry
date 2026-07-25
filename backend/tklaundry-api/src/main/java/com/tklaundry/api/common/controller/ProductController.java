@@ -28,8 +28,8 @@ public class ProductController {
 
 	@GetMapping
 	public ResponseEntity<List<ComProduct>> listProducts(
-			@RequestParam("processCode") String processCode,
-			@RequestParam("groupCode") String groupCode) {
+			@RequestParam(value = "processCode", required = false) String processCode,
+			@RequestParam(value = "groupCode", required = false) String groupCode) {
 		return ResponseEntity.ok(comProductService.listProducts(processCode, groupCode));
 	}
 
