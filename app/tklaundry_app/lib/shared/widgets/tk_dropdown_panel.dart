@@ -136,6 +136,10 @@ class TkDropdownOverlayController {
   final BuildContext context;
   final LayerLink layerLink = LayerLink();
 
+  /// 앵커 필드와 패널을 같은 그룹으로 묶어, 바깥 탭만 닫고
+  /// 다른 콤보/필드의 클릭은 가로채지 않는다.
+  final Object tapRegionGroup = Object();
+
   OverlayEntry? _entry;
   VoidCallback? _onHide;
 
@@ -152,24 +156,26 @@ class TkDropdownOverlayController {
 
     _entry = OverlayEntry(
       builder: (overlayContext) {
-        return Stack(
-          children: [
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTap: hide,
-              ),
-            ),
-            CompositedTransformFollower(
-              link: layerLink,
-              showWhenUnlinked: false,
-              offset: Offset(0, offsetY),
+        // Overlay는 자식에게 화면 전체 loose constraints를 준다.
+        // Align(width/heightFactor: 1)로 패널 콘텐츠 크기로 줄이지 않으면
+        // Material이 아래로 크게 늘어나 흰 영역·클릭 먹통이 된다.
+        return CompositedTransformFollower(
+          link: layerLink,
+          showWhenUnlinked: false,
+          offset: Offset(0, offsetY),
+          child: TapRegion(
+            groupId: tapRegionGroup,
+            onTapOutside: (_) => hide(),
+            child: Align(
+              alignment: Alignment.topLeft,
+              widthFactor: 1,
+              heightFactor: 1,
               child: Material(
                 color: Colors.transparent,
                 child: panelBuilder(),
               ),
             ),
-          ],
+          ),
         );
       },
     );
@@ -231,11 +237,15 @@ InputDecoration tkDropdownDecoration({
 
 Widget tkDropdownAnchorField({
   required LayerLink layerLink,
+  required Object tapRegionGroup,
   required Widget child,
 }) {
   return CompositedTransformTarget(
     link: layerLink,
-    child: child,
+    child: TapRegion(
+      groupId: tapRegionGroup,
+      child: child,
+    ),
   );
 }
 

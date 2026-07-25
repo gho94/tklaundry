@@ -236,6 +236,7 @@ class _TkLookupFieldState<T> extends State<TkLookupField<T>> {
 
     return tkDropdownAnchorField(
       layerLink: overlay?.layerLink ?? LayerLink(),
+      tapRegionGroup: overlay?.tapRegionGroup ?? this,
       child: TextField(
         key: _fieldKey,
         controller: _controller,
