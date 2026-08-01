@@ -44,4 +44,108 @@
         ORDER BY OrderSeq
     </select>
 
+    <select id="selectAllOrderDetailsByOrderNo" resultType="com.tklaundry.api.sales.order.model.OrderDetail">
+        SELECT
+            OrderNo       AS orderNo,
+            OrderSeq      AS orderSeq,
+            ProductCode   AS productCode,
+            ProcessCode   AS processCode,
+            Price         AS price,
+            Qty           AS qty,
+            Discount      AS discount,
+            Cost          AS cost,
+            CompleteYn    AS completeYn,
+            Remark        AS remark
+        FROM OrderDetail
+        WHERE OrderNo = #{orderNo}
+        ORDER BY OrderSeq
+    </select>
+
+    <insert id="insertDeliveryMaster">
+        INSERT INTO DeliveryMaster (
+            DeliveryNo,
+            OrderDate,
+            CustCode,
+            Qty,
+            Discount,
+            Cost,
+            BankingYn,
+            Status,
+            DeliveryDate,
+            InsertDate,
+            InsertUserID
+        ) VALUES (
+            #{deliveryNo},
+            #{orderDate},
+            #{custCode},
+            #{qty},
+            #{discount},
+            #{cost},
+            #{bankingYn},
+            #{status},
+            #{deliveryDate},
+            GETDATE(),
+            #{insertUserId}
+        )
+    </insert>
+
+    <insert id="insertDeliveryDetails">
+        INSERT INTO DeliveryDetail (
+            DeliveryNo,
+            DeliverySeq,
+            ProductCode,
+            ProcessCode,
+            Price,
+            Qty,
+            Discount,
+            Cost,
+            OrderNo,
+            OrderSeq,
+            Remark
+        ) VALUES
+        <foreach collection="deliveryDetails" item="deliveryDetail" separator=",">
+            (
+                #{deliveryDetail.deliveryNo},
+                #{deliveryDetail.deliverySeq},
+                #{deliveryDetail.productCode},
+                #{deliveryDetail.processCode},
+                #{deliveryDetail.price},
+                #{deliveryDetail.qty},
+                #{deliveryDetail.discount},
+                #{deliveryDetail.cost},
+                #{deliveryDetail.orderNo},
+                #{deliveryDetail.orderSeq},
+                #{deliveryDetail.remark}
+            )
+        </foreach>
+    </insert>
+
+    <update id="updateOrderDetailOnDelivery">
+        UPDATE OrderDetail
+        SET Discount = #{discount},
+            Cost = #{cost},
+            CompleteYn = 'Y'
+        WHERE OrderNo = #{orderNo}
+          AND OrderSeq = #{orderSeq}
+          AND CompleteYn = 'N'
+    </update>
+
+    <update id="updateOrderMasterDiscountCost">
+        UPDATE OrderMaster
+        SET Discount = #{discount},
+            Cost = #{cost},
+            UpdateDate = GETDATE()
+        WHERE OrderNo = #{orderNo}
+    </update>
+
+    <update id="updateOrderMasterOnCompleteDelivery">
+        UPDATE OrderMaster
+        SET Status = #{status},
+            CompleteYn = 'Y',
+            DeliveryDate = GETDATE(),
+            UpdateDate = GETDATE(),
+            UpdateUserID = #{updateUserId}
+        WHERE OrderNo = #{orderNo}
+    </update>
+
 </mapper>
