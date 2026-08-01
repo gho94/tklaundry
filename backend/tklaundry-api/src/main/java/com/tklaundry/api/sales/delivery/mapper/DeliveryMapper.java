@@ -19,7 +19,14 @@ public interface DeliveryMapper {
 			@Param("endDate") LocalDate endDate,
 			@Param("custCode") String custCode);
 
+	List<DeliveryMaster> selectDeliveryMasterList(
+			@Param("startDate") LocalDate startDate,
+			@Param("endDate") LocalDate endDate,
+			@Param("custCode") String custCode);
+
 	List<OrderDetail> selectOrderDetailList(@Param("orderNo") String orderNo);
+
+	List<DeliveryDetail> selectDeliveryDetailList(@Param("deliveryNo") String deliveryNo);
 
 	List<OrderDetail> selectAllOrderDetailsByOrderNo(@Param("orderNo") String orderNo);
 

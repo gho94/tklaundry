@@ -14,6 +14,7 @@ import com.tklaundry.api.common.service.IAutoNumberService;
 import com.tklaundry.api.common.web.ApiErrorCode;
 import com.tklaundry.api.common.web.ApiException;
 import com.tklaundry.api.sales.delivery.dto.DeliveryDetailRequest;
+import com.tklaundry.api.sales.delivery.dto.DeliveryListResponse;
 import com.tklaundry.api.sales.delivery.dto.DeliveryRequest;
 import com.tklaundry.api.sales.delivery.mapper.DeliveryMapper;
 import com.tklaundry.api.sales.delivery.model.DeliveryDetail;
@@ -51,6 +52,23 @@ public class DeliveryService implements IDeliveryService {
 	@Override
 	public List<OrderDetail> listOrderDetails(String orderNo) {
 		return deliveryMapper.selectOrderDetailList(orderNo);
+	}
+
+	@Override
+	public DeliveryListResponse listDeliveries(LocalDate startDate, LocalDate endDate, String custCode) {
+		List<DeliveryMaster> deliveryMasters = deliveryMapper.selectDeliveryMasterList(
+				startDate, endDate.plusDays(1), custCode);
+
+		int totalAmount = deliveryMasters.stream()
+				.mapToInt(deliveryMaster -> deliveryMaster.getCost() != null ? deliveryMaster.getCost() : 0)
+				.sum();
+
+		return new DeliveryListResponse(deliveryMasters, deliveryMasters.size(), totalAmount);
+	}
+
+	@Override
+	public List<DeliveryDetail> listDeliveryDetails(String deliveryNo) {
+		return deliveryMapper.selectDeliveryDetailList(deliveryNo);
 	}
 
 	@Override

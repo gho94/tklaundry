@@ -1,5 +1,7 @@
 import '../../../core/network/api_client.dart';
 import '../../../shared/utils/tk_format.dart';
+import '../domain/delivery_detail.dart';
+import '../domain/delivery_list_result.dart';
 import '../../order/domain/order_detail.dart';
 import '../../order/domain/order_list_result.dart';
 
@@ -76,6 +78,28 @@ class DeliveryApi {
     return OrderListResult.fromJson(body);
   }
 
+  Future<DeliveryListResult> listDeliveries({
+    required DateTime startDate,
+    required DateTime endDate,
+    String? custCode,
+  }) async {
+    final queryParameters = <String, String>{
+      'startDate': startDate.toApiDate(),
+      'endDate': endDate.toApiDate(),
+    };
+    if (custCode != null && custCode.isNotEmpty) {
+      queryParameters['custCode'] = custCode;
+    }
+
+    final body = await _client.get(
+      '/deliveries',
+      queryParameters: queryParameters,
+      fallbackMessage: '출고 내역을 불러오지 못했습니다.',
+    );
+
+    return DeliveryListResult.fromJson(body);
+  }
+
   Future<List<OrderDetail>> listOrderDetails(String orderNo) async {
     final body = await _client.getList(
       '/deliveries/orders/${Uri.encodeComponent(orderNo)}/details',
@@ -84,6 +108,17 @@ class DeliveryApi {
 
     return body
         .map((item) => OrderDetail.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<DeliveryDetail>> listDeliveryDetails(String deliveryNo) async {
+    final body = await _client.getList(
+      '/deliveries/${Uri.encodeComponent(deliveryNo)}/details',
+      fallbackMessage: '출고 상세를 불러오지 못했습니다.',
+    );
+
+    return body
+        .map((item) => DeliveryDetail.fromJson(item as Map<String, dynamic>))
         .toList();
   }
 

@@ -26,6 +26,27 @@
         ORDER BY OrderDate DESC, OrderNo DESC
     </select>
 
+    <select id="selectDeliveryMasterList" resultType="com.tklaundry.api.sales.delivery.model.DeliveryMaster">
+        SELECT
+            DeliveryNo    AS deliveryNo,
+            OrderDate     AS orderDate,
+            CustCode      AS custCode,
+            Qty           AS qty,
+            Discount      AS discount,
+            Cost          AS cost,
+            BankingYn     AS bankingYn,
+            Status        AS status,
+            DeliveryDate  AS deliveryDate
+        FROM DeliveryMaster
+        <where>
+            <if test="custCode != null and custCode != ''">
+                AND CustCode = #{custCode}
+            </if>
+            AND DeliveryDate BETWEEN #{startDate} AND #{endDate}
+        </where>
+        ORDER BY DeliveryDate DESC, DeliveryNo DESC
+    </select>
+
     <select id="selectOrderDetailList" resultType="com.tklaundry.api.sales.order.model.OrderDetail">
         SELECT
             OrderNo       AS orderNo,
@@ -42,6 +63,24 @@
         WHERE OrderNo = #{orderNo}
           AND CompleteYn = 'N'
         ORDER BY OrderSeq
+    </select>
+
+    <select id="selectDeliveryDetailList" resultType="com.tklaundry.api.sales.delivery.model.DeliveryDetail">
+        SELECT
+            DeliveryNo    AS deliveryNo,
+            DeliverySeq   AS deliverySeq,
+            ProductCode   AS productCode,
+            ProcessCode   AS processCode,
+            Price         AS price,
+            Qty           AS qty,
+            Discount      AS discount,
+            Cost          AS cost,
+            OrderNo       AS orderNo,
+            OrderSeq      AS orderSeq,
+            Remark        AS remark
+        FROM DeliveryDetail
+        WHERE DeliveryNo = #{deliveryNo}
+        ORDER BY DeliverySeq
     </select>
 
     <select id="selectAllOrderDetailsByOrderNo" resultType="com.tklaundry.api.sales.order.model.OrderDetail">

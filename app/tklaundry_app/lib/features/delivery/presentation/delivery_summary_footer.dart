@@ -2,17 +2,21 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/utils/tk_format.dart';
-import '../../order/domain/order_list_result.dart';
 
 class DeliverySummaryFooter extends StatelessWidget {
-  const DeliverySummaryFooter({super.key, required this.result});
+  const DeliverySummaryFooter({
+    super.key,
+    this.count,
+    this.totalAmount,
+  });
 
-  final OrderListResult? result;
+  final int? count;
+  final int? totalAmount;
 
   @override
   Widget build(BuildContext context) {
-    final count = result?.count ?? 0;
-    final totalAmount = result?.totalAmount ?? 0;
+    final resolvedCount = count ?? 0;
+    final resolvedTotalAmount = totalAmount ?? 0;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -24,9 +28,9 @@ class DeliverySummaryFooter extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Text('건수: ${count.formatted}'),
+          Text('건수: ${resolvedCount.formatted}'),
           const SizedBox(width: 24),
-          Text('총액: ${totalAmount.formatted}'),
+          Text('총액: ${resolvedTotalAmount.formatted}'),
         ],
       ),
     );
