@@ -34,6 +34,11 @@ class TkGridColumn {
 
 typedef TkGridRowBuilder = List<Widget> Function(int index);
 
+typedef TkGridHeaderCellBuilder = Widget? Function(
+  int columnIndex,
+  TkGridColumn column,
+);
+
 class TkGridTable extends StatelessWidget {
   const TkGridTable({
     super.key,
@@ -41,6 +46,7 @@ class TkGridTable extends StatelessWidget {
     this.rows,
     this.itemCount,
     this.itemBuilder,
+    this.headerCellBuilder,
     this.emptyMessage = '데이터가 없습니다.',
     this.rowHeight = 44,
     this.headerHeight = 44,
@@ -57,6 +63,7 @@ class TkGridTable extends StatelessWidget {
   final List<List<Widget>>? rows;
   final int? itemCount;
   final TkGridRowBuilder? itemBuilder;
+  final TkGridHeaderCellBuilder? headerCellBuilder;
   final String emptyMessage;
   final double rowHeight;
   final double headerHeight;
@@ -95,6 +102,7 @@ class TkGridTable extends StatelessWidget {
               columns: columns,
               widths: columnWidths,
               height: headerHeight,
+              headerCellBuilder: headerCellBuilder,
             ),
             Expanded(
               child: DecoratedBox(
@@ -168,11 +176,13 @@ class _HeaderRow extends StatelessWidget {
     required this.columns,
     required this.widths,
     required this.height,
+    this.headerCellBuilder,
   });
 
   final List<TkGridColumn> columns;
   final List<double> widths;
   final double height;
+  final TkGridHeaderCellBuilder? headerCellBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -195,6 +205,7 @@ class _HeaderRow extends StatelessWidget {
                 column: columns[i],
                 width: widths[i],
                 showRightBorder: i < columns.length - 1,
+                child: headerCellBuilder?.call(i, columns[i]),
               ),
           ],
         ),
@@ -208,11 +219,13 @@ class _HeaderCell extends StatelessWidget {
     required this.column,
     required this.width,
     required this.showRightBorder,
+    this.child,
   });
 
   final TkGridColumn column;
   final double width;
   final bool showRightBorder;
+  final Widget? child;
 
   @override
   Widget build(BuildContext context) {
@@ -223,17 +236,18 @@ class _HeaderCell extends StatelessWidget {
             ? const Border(right: TkGridTable._borderSide)
             : null,
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: EdgeInsets.symmetric(horizontal: child == null ? 12 : 4),
       child: Align(
         alignment: Alignment.center,
-        child: Text(
-          column.label,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-            fontSize: 13,
-          ),
-        ),
+        child: child ??
+            Text(
+              column.label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+                fontSize: 13,
+              ),
+            ),
       ),
     );
   }
