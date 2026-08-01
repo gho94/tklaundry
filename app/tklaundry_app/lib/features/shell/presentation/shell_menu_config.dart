@@ -5,6 +5,7 @@ import '../../../shared/widgets/tk_sidebar.dart';
 import '../../code/presentation/code_list_page.dart';
 import '../../customer/presentation/customer_list_page.dart';
 import '../../member/presentation/member_list_page.dart';
+import '../../delivery/presentation/delivery_list_page.dart';
 import '../../order/presentation/order_list_page.dart';
 import '../../product/presentation/product_list_page.dart';
 
@@ -95,6 +96,7 @@ class ShellMenuConfig {
   static Widget? pageFor(String? selectedItemId) {
     return switch (MenuId.fromId(selectedItemId)) {
       MenuId.order => const OrderListPage(),
+      MenuId.delivery => const DeliveryListPage(),
       MenuId.code => const CodeListPage(),
       MenuId.member => const MemberListPage(),
       MenuId.customer => const CustomerListPage(),
