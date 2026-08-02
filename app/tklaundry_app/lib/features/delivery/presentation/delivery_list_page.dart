@@ -205,11 +205,6 @@ class _DeliveryListPageState extends ConsumerState<DeliveryListPage> {
     });
   }
 
-  bool _isFirstStatus(List<TkComboItem<String>> statusItems) {
-    if (_statusCode == null || statusItems.isEmpty) return true;
-    return _statusCode == statusItems.first.value;
-  }
-
   void _selectOrder(Order order, int index) {
     setState(() {
       _selectedRowIndex = index;
@@ -232,7 +227,6 @@ class _DeliveryListPageState extends ConsumerState<DeliveryListPage> {
       return;
     }
 
-    final statusItems = _statusItems(codes);
     final statusCode = _statusCode;
     if (statusCode == null || statusCode.isEmpty) {
       context.showTkMessage('결제 상태를 선택해 주세요.');
@@ -254,8 +248,7 @@ class _DeliveryListPageState extends ConsumerState<DeliveryListPage> {
         return;
       }
 
-      final bankingYn =
-          _isFirstStatus(statusItems) ? 'N' : (_bankingYn ? 'Y' : 'N');
+      final bankingYn = _bankingYn ? 'Y' : 'N';
 
       await _deliveryApi.registerDelivery(
         orderNo: order.orderNo,
@@ -299,7 +292,6 @@ class _DeliveryListPageState extends ConsumerState<DeliveryListPage> {
     if (_selectedOrderNo != null) {
       _ensureDefaultStatus(statusItems);
     }
-    final showBanking = _selectedOrderNo != null && !_isFirstStatus(statusItems);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -433,33 +425,26 @@ class _DeliveryListPageState extends ConsumerState<DeliveryListPage> {
                   onChanged: statusItems.isEmpty || _isSubmitting
                       ? null
                       : (value) {
-                          setState(() {
-                            _statusCode = value;
-                            if (_isFirstStatus(statusItems)) {
-                              _bankingYn = false;
-                            }
-                          });
+                          setState(() => _statusCode = value);
                         },
                 ),
               ),
-              if (showBanking) ...[
-                const SizedBox(width: 4),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Checkbox(
-                      value: _bankingYn,
-                      visualDensity: VisualDensity.compact,
-                      onChanged: _isSubmitting
-                          ? null
-                          : (value) {
-                              setState(() => _bankingYn = value ?? false);
-                            },
-                    ),
-                    const Text('뱅킹'),
-                  ],
-                ),
-              ],
+              const SizedBox(width: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Checkbox(
+                    value: _bankingYn,
+                    visualDensity: VisualDensity.compact,
+                    onChanged: _isSubmitting
+                        ? null
+                        : (value) {
+                            setState(() => _bankingYn = value ?? false);
+                          },
+                  ),
+                  const Text('뱅킹'),
+                ],
+              ),
               const Spacer(),
               TkPrimaryButton(
                 label: '출고',
