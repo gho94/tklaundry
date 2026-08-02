@@ -17,6 +17,7 @@ import '../../customer/domain/customer.dart';
 import '../../delivery/presentation/delivery_summary_footer.dart';
 import '../../product/data/product_api.dart';
 import '../domain/sales.dart';
+import 'pending_payment_dialog.dart';
 import 'sales_view_detail_panel.dart';
 import 'sales_view_provider.dart';
 
@@ -256,6 +257,23 @@ class _SalesViewPageState extends ConsumerState<SalesViewPage> {
               ),
             ),
             const Spacer(),
+            TkPrimaryButton(
+              label: '미수금 결제',
+              variant: TkButtonVariant.outline,
+              icon: Icons.payments_outlined,
+              onPressed: !_customersReady
+                  ? null
+                  : () async {
+                      final paid = await PendingPaymentDialog.show(
+                        context,
+                        customers: _customers,
+                      );
+                      if (paid == true && mounted) {
+                        await _search();
+                      }
+                    },
+            ),
+            const SizedBox(width: 8),
             TkPrimaryButton(
               label: '조회',
               variant: TkButtonVariant.outline,

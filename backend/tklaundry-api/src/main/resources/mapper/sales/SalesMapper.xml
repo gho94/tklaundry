@@ -45,6 +45,45 @@
         ORDER BY SalesSeq
     </select>
 
+    <select id="selectPendingPaymentList" resultType="com.tklaundry.api.sales.sales.dto.PendingPaymentItem">
+        SELECT DISTINCT
+            sm.SalesNo     AS salesNo,
+            sm.CustCode    AS custCode,
+            sm.Qty         AS qty,
+            sm.Discount    AS discount,
+            sm.Cost        AS cost,
+            sm.BankingYn   AS bankingYn,
+            sm.Status      AS status,
+            dm.DeliveryDate AS deliveryDate
+        FROM SalesMaster sm
+        INNER JOIN SalesDetail sd ON sd.SalesNo = sm.SalesNo
+        INNER JOIN DeliveryMaster dm ON dm.DeliveryNo = sd.DeliveryNo
+        <where>
+            sm.SalesYn = 'N'
+            <if test="custCode != null and custCode != ''">
+                AND sm.CustCode = #{custCode}
+            </if>
+        </where>
+        ORDER BY dm.DeliveryDate DESC, sm.SalesNo DESC
+    </select>
+
+    <update id="updateSalesMasterOnPayment">
+        UPDATE SalesMaster
+        SET SalesDate = GETDATE(),
+            SalesYn = 'Y',
+            BankingYn = #{bankingYn},
+            UpdateDate = GETDATE(),
+            UpdateUserID = #{updateUserId}
+        WHERE SalesNo = #{salesNo}
+    </update>
+
+    <update id="updateOrderDetailRemarkOnPayment">
+        UPDATE OrderDetail
+        SET Remark = #{remark}
+        WHERE OrderNo = #{orderNo}
+          AND OrderSeq = #{orderSeq}
+    </update>
+
     <select id="selectSalesNoByOrderNo" resultType="string">
         SELECT TOP 1 SalesNo
         FROM SalesDetail

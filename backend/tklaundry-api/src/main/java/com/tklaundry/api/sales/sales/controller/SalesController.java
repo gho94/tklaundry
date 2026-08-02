@@ -2,14 +2,18 @@ package com.tklaundry.api.sales.sales.controller;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tklaundry.api.sales.sales.dto.PendingPaymentItem;
 import com.tklaundry.api.sales.sales.dto.SalesListResponse;
 import com.tklaundry.api.sales.sales.model.SalesDetail;
 import com.tklaundry.api.sales.sales.service.ISalesService;
@@ -35,6 +39,20 @@ public class SalesController {
 	public ResponseEntity<List<SalesDetail>> listSalesDetails(
 			@PathVariable("salesNo") String salesNo) {
 		return ResponseEntity.ok(salesService.listSalesDetails(salesNo));
+	}
+
+	@GetMapping("/payments/pending")
+	public ResponseEntity<List<PendingPaymentItem>> listPendingPayments(
+			@RequestParam(value = "custCode", required = false) String custCode) {
+		return ResponseEntity.ok(salesService.listPendingPayments(custCode));
+	}
+
+	@PostMapping("/payments/{salesNo}")
+	public ResponseEntity<Void> registerPayment(
+			@PathVariable("salesNo") String salesNo,
+			@RequestBody Map<String, String> body) {
+		salesService.registerPayment(salesNo, body.get("bankingYn"));
+		return ResponseEntity.noContent().build();
 	}
 
 }

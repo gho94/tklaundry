@@ -2,9 +2,11 @@ package com.tklaundry.api.sales.sales.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.tklaundry.api.common.constants.AutoNumberDoc;
@@ -17,6 +19,7 @@ import com.tklaundry.api.sales.delivery.model.DeliveryMaster;
 import com.tklaundry.api.sales.order.model.OrderDetail;
 import com.tklaundry.api.sales.order.model.OrderMaster;
 import com.tklaundry.api.sales.sales.mapper.SalesMapper;
+import com.tklaundry.api.sales.sales.dto.PendingPaymentItem;
 import com.tklaundry.api.sales.sales.dto.SalesListResponse;
 import com.tklaundry.api.sales.sales.model.SalesDetail;
 import com.tklaundry.api.sales.sales.model.SalesMaster;
@@ -46,6 +49,33 @@ public class SalesService implements ISalesService {
 	@Override
 	public List<SalesDetail> listSalesDetails(String salesNo) {
 		return salesMapper.selectSalesDetailList(salesNo);
+	}
+
+	@Override
+	public List<PendingPaymentItem> listPendingPayments(String custCode) {
+		return salesMapper.selectPendingPaymentList(custCode);
+	}
+
+	@Override
+	@Transactional
+	public void registerPayment(String salesNo, String bankingYn) {
+		String paymentRemark = " / 외상 결제일 : "
+				+ DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").format(LocalDateTime.now());
+
+		salesMapper.updateSalesMasterOnPayment(
+				salesNo,
+				bankingYn,
+				commonInfo.getUser().getUserId());
+
+		for (SalesDetail salesDetail : salesMapper.selectSalesDetailList(salesNo)) {
+			if (!StringUtils.hasText(salesDetail.getOrderNo()) || salesDetail.getOrderSeq() == null) {
+				continue;
+			}
+			salesMapper.updateOrderDetailRemarkOnPayment(
+					salesDetail.getOrderNo(),
+					salesDetail.getOrderSeq(),
+					paymentRemark);
+		}
 	}
 
 	@Override
