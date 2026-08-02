@@ -18,6 +18,7 @@ import com.tklaundry.api.sales.order.dto.OrderRequest;
 import com.tklaundry.api.sales.order.mapper.OrderMapper;
 import com.tklaundry.api.sales.order.model.OrderDetail;
 import com.tklaundry.api.sales.order.model.OrderMaster;
+import com.tklaundry.api.sales.sales.service.ISalesService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,6 +29,7 @@ public class OrderService implements IOrderService {
 	private final OrderMapper orderMapper;
 	private final IAutoNumberService autoNumberService;
 	private final CommonInfo commonInfo;
+	private final ISalesService salesService;
 
 	@Override
 	public OrderListResponse listOrders(LocalDate startDate, LocalDate endDate, String custCode) {
@@ -68,7 +70,7 @@ public class OrderService implements IOrderService {
 		orderMapper.insertOrderMaster(orderMaster);
 		orderMapper.insertOrderDetails(orderDetails);
 
-		// 선불 시 SalesMaster/Detail 자동 생성 — 매출 단계에서 구현
+		salesService.handleOrderStatusChange(orderMaster, orderDetails);
 
 		return orderMaster;
 	}
@@ -96,7 +98,7 @@ public class OrderService implements IOrderService {
 		orderMapper.deleteOrderDetails(orderNo);
 		orderMapper.insertOrderDetails(orderDetails);
 
-		// 선불 변경 시 SalesMaster/Detail 동기화 — 매출 단계에서 구현
+		salesService.handleOrderStatusChange(orderMaster, orderDetails);
 	}
 
 	@Override
@@ -104,7 +106,7 @@ public class OrderService implements IOrderService {
 	public void removeOrder(String orderNo) {
 		ensureOrderEditable(orderNo);
 
-		// 선불 연결 SalesMaster/Detail 삭제 — 매출 단계에서 구현
+		salesService.removePrepaidSales(orderNo);
 
 		orderMapper.deleteOrderDetails(orderNo);
 		orderMapper.deleteOrderMaster(orderNo);

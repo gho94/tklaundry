@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tklaundry.api.sales.sales.mapper.SalesMapper">
+
+    <select id="selectSalesNoByOrderNo" resultType="string">
+        SELECT TOP 1 SalesNo
+        FROM SalesDetail
+        WHERE OrderNo = #{orderNo}
+    </select>
+
+    <select id="selectSalesDateBySalesNo" resultType="java.time.LocalDateTime">
+        SELECT SalesDate
+        FROM SalesMaster
+        WHERE SalesNo = #{salesNo}
+    </select>
+
+    <update id="upsertSalesMaster">
+        IF EXISTS (
+            SELECT SalesNo
+            FROM SalesMaster
+            WHERE SalesNo = #{salesNo}
+        )
+            UPDATE SalesMaster
+            SET SalesDate = #{salesDate},
+                CustCode = #{custCode},
+                Qty = #{qty},
+                Discount = #{discount},
+                Cost = #{cost},
+                BankingYn = #{bankingYn},
+                Status = #{status},
+                SalesYn = #{salesYn},
+                UpdateDate = GETDATE(),
+                UpdateUserID = #{updateUserId}
+            WHERE SalesNo = #{salesNo}
+        ELSE
+            INSERT INTO SalesMaster (
+                SalesNo,
+                SalesDate,
+                CustCode,
+                Qty,
+                Discount,
+                Cost,
+                BankingYn,
+                Status,
+                SalesYn,
+                InsertDate,
+                InsertUserID
+            ) VALUES (
+                #{salesNo},
+                #{salesDate},
+                #{custCode},
+                #{qty},
+                #{discount},
+                #{cost},
+                #{bankingYn},
+                #{status},
+                #{salesYn},
+                GETDATE(),
+                #{insertUserId}
+            )
+    </update>
+
+    <update id="upsertSalesDetail">
+        IF EXISTS (
+            SELECT SalesNo, SalesSeq
+            FROM SalesDetail
+            WHERE SalesNo = #{salesNo}
+              AND SalesSeq = #{salesSeq}
+        )
+            UPDATE SalesDetail
+            SET ProductCode = #{productCode},
+                ProcessCode = #{processCode},
+                Price = #{price},
+                Qty = #{qty},
+                Discount = #{discount},
+                Cost = #{cost},
+                OrderNo = #{orderNo},
+                OrderSeq = #{orderSeq},
+                DeliveryNo = #{deliveryNo},
+                DeliverySeq = #{deliverySeq},
+                Remark = #{remark}
+            WHERE SalesNo = #{salesNo}
+              AND SalesSeq = #{salesSeq}
+        ELSE
+            INSERT INTO SalesDetail (
+                SalesNo,
+                SalesSeq,
+                ProductCode,
+                ProcessCode,
+                Price,
+                Qty,
+                Discount,
+                Cost,
+                OrderNo,
+                OrderSeq,
+                DeliveryNo,
+                DeliverySeq,
+                Remark
+            ) VALUES (
+                #{salesNo},
+                #{salesSeq},
+                #{productCode},
+                #{processCode},
+                #{price},
+                #{qty},
+                #{discount},
+                #{cost},
+                #{orderNo},
+                #{orderSeq},
+                #{deliveryNo},
+                #{deliverySeq},
+                #{remark}
+            )
+    </update>
+
+    <delete id="deleteSalesDetailsByOrderNoAndSeqGreaterThan">
+        DELETE FROM SalesDetail
+        WHERE OrderNo = #{orderNo}
+          AND OrderSeq &gt; #{maxSeq}
+    </delete>
+
+    <delete id="deleteSalesDetailsBySalesNo">
+        DELETE FROM SalesDetail
+        WHERE SalesNo = #{salesNo}
+    </delete>
+
+    <delete id="deleteSalesMaster">
+        DELETE FROM SalesMaster
+        WHERE SalesNo = #{salesNo}
+    </delete>
+
+</mapper>

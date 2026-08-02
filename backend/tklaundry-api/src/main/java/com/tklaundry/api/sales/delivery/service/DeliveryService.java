@@ -13,6 +13,7 @@ import com.tklaundry.api.common.CommonInfo;
 import com.tklaundry.api.common.service.IAutoNumberService;
 import com.tklaundry.api.common.web.ApiErrorCode;
 import com.tklaundry.api.common.web.ApiException;
+import com.tklaundry.api.common.PaymentStatusCodes;
 import com.tklaundry.api.sales.delivery.dto.DeliveryDetailRequest;
 import com.tklaundry.api.sales.delivery.dto.DeliveryListResponse;
 import com.tklaundry.api.sales.delivery.dto.DeliveryRequest;
@@ -22,6 +23,7 @@ import com.tklaundry.api.sales.delivery.model.DeliveryMaster;
 import com.tklaundry.api.sales.order.dto.OrderListResponse;
 import com.tklaundry.api.sales.order.model.OrderDetail;
 import com.tklaundry.api.sales.order.model.OrderMaster;
+import com.tklaundry.api.sales.sales.service.ISalesService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,13 +31,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DeliveryService implements IDeliveryService {
 
-	private static final String STATUS_GENERAL = "B20001";
-	private static final String STATUS_PREPAID = "B20002";
-	private static final String STATUS_CREDIT = "B20005";
-
 	private final DeliveryMapper deliveryMapper;
 	private final IAutoNumberService autoNumberService;
 	private final CommonInfo commonInfo;
+	private final ISalesService salesService;
 
 	@Override
 	public OrderListResponse listOrders(LocalDate startDate, LocalDate endDate, String custCode) {
@@ -74,12 +73,12 @@ public class DeliveryService implements IDeliveryService {
 	@Override
 	@Transactional
 	public DeliveryMaster registerDelivery(DeliveryRequest request) {
-		if (STATUS_CREDIT.equals(request.getStatus())
-				&& STATUS_PREPAID.equals(request.getOrderStatus())) {
+		if (PaymentStatusCodes.CREDIT.equals(request.getStatus())
+				&& PaymentStatusCodes.PREPAID.equals(request.getOrderStatus())) {
 			throw new ApiException(ApiErrorCode.CONFLICT, "선불처리된 제품입니다.");
 		}
 
-		String resolvedStatus = STATUS_GENERAL.equals(request.getStatus())
+		String resolvedStatus = PaymentStatusCodes.GENERAL.equals(request.getStatus())
 				? request.getOrderStatus()
 				: request.getStatus();
 		String deliveryNo = autoNumberService.nextDocumentNo(AutoNumberDoc.DELIVERY);
@@ -159,7 +158,7 @@ public class DeliveryService implements IDeliveryService {
 					commonInfo.getUser().getUserId());
 		}
 
-		// SalesMaster/Detail 생성 — 매출 단계에서 구현
+		salesService.createFromDelivery(request, deliveryMaster, deliveryDetails, resolvedStatus);
 
 		return deliveryMaster;
 	}
