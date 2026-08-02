@@ -9,6 +9,7 @@ import '../../delivery/presentation/delivery_list_page.dart';
 import '../../delivery/presentation/delivery_view_page.dart';
 import '../../order/presentation/order_list_page.dart';
 import '../../product/presentation/product_list_page.dart';
+import '../../sales/presentation/sales_view_page.dart';
 
 class ShellMenuConfig {
   ShellMenuConfig._();
@@ -99,6 +100,7 @@ class ShellMenuConfig {
       MenuId.order => const OrderListPage(),
       MenuId.delivery => const DeliveryListPage(),
       MenuId.deliveryView => const DeliveryViewPage(),
+      MenuId.salesView => const SalesViewPage(),
       MenuId.code => const CodeListPage(),
       MenuId.member => const MemberListPage(),
       MenuId.customer => const CustomerListPage(),

@@ -1,5 +1,6 @@
 package com.tklaundry.api.sales.sales.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,6 +17,7 @@ import com.tklaundry.api.sales.delivery.model.DeliveryMaster;
 import com.tklaundry.api.sales.order.model.OrderDetail;
 import com.tklaundry.api.sales.order.model.OrderMaster;
 import com.tklaundry.api.sales.sales.mapper.SalesMapper;
+import com.tklaundry.api.sales.sales.dto.SalesListResponse;
 import com.tklaundry.api.sales.sales.model.SalesDetail;
 import com.tklaundry.api.sales.sales.model.SalesMaster;
 
@@ -28,6 +30,23 @@ public class SalesService implements ISalesService {
 	private final SalesMapper salesMapper;
 	private final IAutoNumberService autoNumberService;
 	private final CommonInfo commonInfo;
+
+	@Override
+	public SalesListResponse listSales(LocalDate startDate, LocalDate endDate, String custCode) {
+		List<SalesMaster> salesMasters = salesMapper.selectSalesMasterList(
+				startDate, endDate.plusDays(1), custCode);
+
+		int totalAmount = salesMasters.stream()
+				.mapToInt(salesMaster -> salesMaster.getCost() != null ? salesMaster.getCost() : 0)
+				.sum();
+
+		return new SalesListResponse(salesMasters, salesMasters.size(), totalAmount);
+	}
+
+	@Override
+	public List<SalesDetail> listSalesDetails(String salesNo) {
+		return salesMapper.selectSalesDetailList(salesNo);
+	}
 
 	@Override
 	public void handleOrderStatusChange(OrderMaster orderMaster, List<OrderDetail> orderDetails) {

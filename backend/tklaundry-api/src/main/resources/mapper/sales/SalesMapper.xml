@@ -3,6 +3,48 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.tklaundry.api.sales.sales.mapper.SalesMapper">
 
+    <select id="selectSalesMasterList" resultType="com.tklaundry.api.sales.sales.model.SalesMaster">
+        SELECT
+            SalesNo     AS salesNo,
+            SalesDate   AS salesDate,
+            CustCode    AS custCode,
+            Qty         AS qty,
+            Discount    AS discount,
+            Cost        AS cost,
+            BankingYn   AS bankingYn,
+            Status      AS status,
+            SalesYn     AS salesYn
+        FROM SalesMaster
+        <where>
+            SalesYn = 'Y'
+            AND BankingYn = 'N'
+            <if test="custCode != null and custCode != ''">
+                AND CustCode = #{custCode}
+            </if>
+            AND SalesDate BETWEEN #{startDate} AND #{endDate}
+        </where>
+    </select>
+
+    <select id="selectSalesDetailList" resultType="com.tklaundry.api.sales.sales.model.SalesDetail">
+        SELECT
+            SalesNo       AS salesNo,
+            SalesSeq      AS salesSeq,
+            ProductCode   AS productCode,
+            ProcessCode   AS processCode,
+            Price         AS price,
+            Qty           AS qty,
+            Discount      AS discount,
+            Cost          AS cost,
+            OrderNo       AS orderNo,
+            OrderSeq      AS orderSeq,
+            DeliveryNo    AS deliveryNo,
+            DeliverySeq   AS deliverySeq,
+            Remark        AS remark
+        FROM SalesDetail
+        WHERE SalesNo = #{salesNo}
+        ORDER BY SalesSeq
+    </select>
+
     <select id="selectSalesNoByOrderNo" resultType="string">
         SELECT TOP 1 SalesNo
         FROM SalesDetail
