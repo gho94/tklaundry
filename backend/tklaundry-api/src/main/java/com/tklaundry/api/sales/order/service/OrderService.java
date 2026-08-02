@@ -7,7 +7,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.tklaundry.api.common.AutoNumberDoc;
+import com.tklaundry.api.common.constants.AutoNumberDoc;
 import com.tklaundry.api.common.CommonInfo;
 import com.tklaundry.api.common.service.IAutoNumberService;
 import com.tklaundry.api.common.web.ApiErrorCode;

@@ -6,10 +6,10 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import com.tklaundry.api.common.AutoNumberDoc;
+import com.tklaundry.api.common.constants.AutoNumberDoc;
 import com.tklaundry.api.common.CommonInfo;
 import com.tklaundry.api.common.service.IAutoNumberService;
-import com.tklaundry.api.common.PaymentStatusCodes;
+import com.tklaundry.api.common.constants.PaymentStatusCodes;
 import com.tklaundry.api.sales.delivery.dto.DeliveryRequest;
 import com.tklaundry.api.sales.delivery.model.DeliveryDetail;
 import com.tklaundry.api.sales.delivery.model.DeliveryMaster;

@@ -1,4 +1,4 @@
-package com.tklaundry.api.common;
+package com.tklaundry.api.common.constants;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

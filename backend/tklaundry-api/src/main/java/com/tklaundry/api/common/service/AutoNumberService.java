@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter;
 
 import org.springframework.stereotype.Service;
 
-import com.tklaundry.api.common.AutoNumberDoc;
+import com.tklaundry.api.common.constants.AutoNumberDoc;
 import com.tklaundry.api.common.mapper.AutoNumberMapper;
 
 import lombok.RequiredArgsConstructor;

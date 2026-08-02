@@ -8,12 +8,12 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.tklaundry.api.common.AutoNumberDoc;
+import com.tklaundry.api.common.constants.AutoNumberDoc;
 import com.tklaundry.api.common.CommonInfo;
 import com.tklaundry.api.common.service.IAutoNumberService;
 import com.tklaundry.api.common.web.ApiErrorCode;
 import com.tklaundry.api.common.web.ApiException;
-import com.tklaundry.api.common.PaymentStatusCodes;
+import com.tklaundry.api.common.constants.PaymentStatusCodes;
 import com.tklaundry.api.sales.delivery.dto.DeliveryDetailRequest;
 import com.tklaundry.api.sales.delivery.dto.DeliveryListResponse;
 import com.tklaundry.api.sales.delivery.dto.DeliveryRequest;
