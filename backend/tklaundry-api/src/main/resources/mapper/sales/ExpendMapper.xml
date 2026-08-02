@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tklaundry.api.sales.expend.mapper.ExpendMapper">
+
+    <select id="selectExpendList" resultType="com.tklaundry.api.sales.expend.model.Expend">
+        SELECT
+            IDX         AS idx,
+            ExpendDate  AS expendDate,
+            ExpendCode  AS expendCode,
+            Cost        AS cost,
+            Remark      AS remark
+        FROM Expend
+        <where>
+            AND ExpendDate BETWEEN #{startDate} AND #{endDate}
+        </where>
+        ORDER BY ExpendDate DESC, IDX DESC
+    </select>
+
+    <insert id="insertExpend" useGeneratedKeys="true" keyProperty="idx" keyColumn="IDX">
+        INSERT INTO Expend (
+            ExpendDate,
+            ExpendCode,
+            Cost,
+            Remark,
+            InsertDate,
+            InsertUserID
+        ) VALUES (
+            #{expendDate},
+            #{expendCode},
+            #{cost},
+            #{remark},
+            GETDATE(),
+            #{insertUserId}
+        )
+    </insert>
+
+    <update id="updateExpend">
+        UPDATE Expend
+        SET ExpendDate = #{expendDate},
+            ExpendCode = #{expendCode},
+            Cost = #{cost},
+            Remark = #{remark},
+            UpdateDate = GETDATE(),
+            UpdateUserID = #{updateUserId}
+        WHERE IDX = #{idx}
+    </update>
+
+</mapper>
