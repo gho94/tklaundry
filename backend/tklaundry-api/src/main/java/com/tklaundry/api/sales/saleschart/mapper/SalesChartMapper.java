@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.tklaundry.api.sales.saleschart.dto.SalesChartDailyItem;
 import com.tklaundry.api.sales.saleschart.dto.SalesChartItem;
 
 @Mapper
@@ -22,5 +23,7 @@ public interface SalesChartMapper {
 	List<SalesChartItem> selectYearChart(
 			@Param("startDate") LocalDate startDate,
 			@Param("endDate") LocalDate endDate);
+
+	List<SalesChartDailyItem> selectDailyItems(@Param("salesDate") LocalDate salesDate);
 
 }

@@ -6,6 +6,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.tklaundry.api.sales.saleschart.ChartUnit;
+import com.tklaundry.api.sales.saleschart.dto.SalesChartDailyItem;
+import com.tklaundry.api.sales.saleschart.dto.SalesChartDailyResponse;
 import com.tklaundry.api.sales.saleschart.dto.SalesChartItem;
 import com.tklaundry.api.sales.saleschart.dto.SalesChartResponse;
 import com.tklaundry.api.sales.saleschart.mapper.SalesChartMapper;
@@ -33,6 +35,17 @@ public class SalesChartService implements ISalesChartService {
 				.sum();
 
 		return new SalesChartResponse(items, items.size(), totalAmount);
+	}
+
+	@Override
+	public SalesChartDailyResponse listDailyItems(LocalDate salesDate) {
+		List<SalesChartDailyItem> items = salesChartMapper.selectDailyItems(salesDate);
+
+		int totalAmount = items.stream()
+				.mapToInt(item -> item.getCost() != null ? item.getCost() : 0)
+				.sum();
+
+		return new SalesChartDailyResponse(items, items.size(), totalAmount);
 	}
 
 }

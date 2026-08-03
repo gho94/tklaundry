@@ -66,4 +66,36 @@
         ORDER BY TblSalesMaster.SalesDate
     </select>
 
+    <select id="selectDailyItems" resultType="com.tklaundry.api.sales.saleschart.dto.SalesChartDailyItem">
+        SELECT
+            CONVERT(CHAR(10), SalesDate, 23)  AS salesDate,
+            SalesNo                           AS salesNo,
+            '수입'                            AS salesType,
+            CustCode                          AS custCode,
+            Qty                               AS qty,
+            Discount                          AS discount,
+            ''                                AS expendCode,
+            Cost                              AS cost,
+            Status                            AS status,
+            BankingYn                         AS bankingYn
+        FROM SalesMaster
+        WHERE SalesYn = 'Y'
+          AND CONVERT(CHAR(10), SalesDate, 23) = #{salesDate}
+        UNION ALL
+        SELECT
+            CONVERT(CHAR(10), ExpendDate, 23) AS salesDate,
+            CONVERT(VARCHAR(11), IDX)           AS salesNo,
+            '지출'                              AS salesType,
+            ''                                  AS custCode,
+            0                                   AS qty,
+            0                                   AS discount,
+            ExpendCode                          AS expendCode,
+            -Cost                               AS cost,
+            ''                                  AS status,
+            ''                                  AS bankingYn
+        FROM Expend
+        WHERE CONVERT(CHAR(10), ExpendDate, 23) = #{salesDate}
+        ORDER BY salesDate DESC, salesNo DESC
+    </select>
+
 </mapper>

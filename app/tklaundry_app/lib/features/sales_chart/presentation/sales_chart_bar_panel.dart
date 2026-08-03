@@ -10,10 +10,12 @@ class SalesChartBarPanel extends StatelessWidget {
     super.key,
     required this.items,
     required this.periodLabel,
+    this.onBarTap,
   });
 
   final List<SalesChartItem> items;
   final String Function(SalesChartItem item) periodLabel;
+  final ValueChanged<SalesChartItem>? onBarTap;
 
   @override
   Widget build(BuildContext context) {
@@ -111,6 +113,16 @@ class SalesChartBarPanel extends StatelessWidget {
           ],
           barTouchData: BarTouchData(
             enabled: true,
+            touchCallback: onBarTap == null
+                ? null
+                : (event, response) {
+                    if (event is! FlTapUpEvent || response?.spot == null) {
+                      return;
+                    }
+                    final index = response!.spot!.touchedBarGroupIndex;
+                    if (index < 0 || index >= items.length) return;
+                    onBarTap!(items[index]);
+                  },
             touchTooltipData: BarTouchTooltipData(
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 final item = items[group.x];

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tklaundry.api.common.web.ApiErrorCode;
 import com.tklaundry.api.common.web.ApiException;
 import com.tklaundry.api.sales.saleschart.ChartUnit;
+import com.tklaundry.api.sales.saleschart.dto.SalesChartDailyResponse;
 import com.tklaundry.api.sales.saleschart.dto.SalesChartResponse;
 import com.tklaundry.api.sales.saleschart.service.ISalesChartService;
 
@@ -35,6 +36,12 @@ public class SalesChartController {
 			throw new ApiException(ApiErrorCode.VALIDATION_ERROR, "집계 단위가 올바르지 않습니다.");
 		}
 		return ResponseEntity.ok(salesChartService.getChart(startDate, endDate, unit));
+	}
+
+	@GetMapping("/daily")
+	public ResponseEntity<SalesChartDailyResponse> listDailyItems(
+			@RequestParam("salesDate") LocalDate salesDate) {
+		return ResponseEntity.ok(salesChartService.listDailyItems(salesDate));
 	}
 
 }

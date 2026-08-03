@@ -9,6 +9,7 @@ import '../../../shared/widgets/tk_text_field.dart';
 import '../domain/chart_unit.dart';
 import '../domain/sales_chart_item.dart';
 import 'sales_chart_bar_panel.dart';
+import 'sales_chart_daily_dialog.dart';
 import 'sales_chart_provider.dart';
 
 class SalesChartPage extends ConsumerStatefulWidget {
@@ -146,6 +147,16 @@ class _SalesChartPageState extends ConsumerState<SalesChartPage> {
     return salesDate;
   }
 
+  void _onBarTap(SalesChartItem item) {
+    if (_unit != ChartUnit.day) return;
+    final parsed = DateTime.tryParse(item.salesDate);
+    if (parsed == null) return;
+    SalesChartDailyDialog.show(
+      context,
+      salesDate: DateTime(parsed.year, parsed.month, parsed.day),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final chartAsync = ref.watch(salesChartProvider);
@@ -259,6 +270,7 @@ class _SalesChartPageState extends ConsumerState<SalesChartPage> {
               data: (result) => SalesChartBarPanel(
                 items: result.items,
                 periodLabel: _formatPeriodLabel,
+                onBarTap: _unit == ChartUnit.day ? _onBarTap : null,
               ),
             ),
           ),
