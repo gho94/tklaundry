@@ -7,8 +7,11 @@ import '../../customer/presentation/customer_list_page.dart';
 import '../../member/presentation/member_list_page.dart';
 import '../../delivery/presentation/delivery_list_page.dart';
 import '../../delivery/presentation/delivery_view_page.dart';
+import '../../expend/presentation/expend_list_page.dart';
 import '../../order/presentation/order_list_page.dart';
 import '../../product/presentation/product_list_page.dart';
+import '../../sales/presentation/sales_view_page.dart';
+import '../../sales_chart/presentation/sales_chart_page.dart';
 
 class ShellMenuConfig {
   ShellMenuConfig._();
@@ -98,7 +101,10 @@ class ShellMenuConfig {
     return switch (MenuId.fromId(selectedItemId)) {
       MenuId.order => const OrderListPage(),
       MenuId.delivery => const DeliveryListPage(),
+      MenuId.expend => const ExpendListPage(),
       MenuId.deliveryView => const DeliveryViewPage(),
+      MenuId.salesView => const SalesViewPage(),
+      MenuId.salesChart => const SalesChartPage(),
       MenuId.code => const CodeListPage(),
       MenuId.member => const MemberListPage(),
       MenuId.customer => const CustomerListPage(),

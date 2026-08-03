@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tklaundry.api.sales.sales.mapper.SalesMapper">
+
+    <select id="selectSalesMasterList" resultType="com.tklaundry.api.sales.sales.model.SalesMaster">
+        SELECT
+            SalesNo     AS salesNo,
+            SalesDate   AS salesDate,
+            CustCode    AS custCode,
+            Qty         AS qty,
+            Discount    AS discount,
+            Cost        AS cost,
+            BankingYn   AS bankingYn,
+            Status      AS status,
+            SalesYn     AS salesYn
+        FROM SalesMaster
+        WHERE SalesYn = 'Y'
+          AND BankingYn = 'N'
+          <if test="custCode != null and custCode != ''">
+              AND CustCode = #{custCode}
+          </if>
+          AND SalesDate BETWEEN #{startDate} AND #{endDate}
+        <if test="custCode == null or custCode == ''">
+        UNION ALL
+        SELECT
+            CONVERT(VARCHAR(11), IDX)     AS salesNo,
+            CAST(ExpendDate AS DATETIME)  AS salesDate,
+            ''                            AS custCode,
+            0                             AS qty,
+            0                             AS discount,
+            -Cost                         AS cost,
+            ''                            AS bankingYn,
+            ''                            AS status,
+            ''                            AS salesYn
+        FROM Expend
+        WHERE ExpendDate BETWEEN #{startDate} AND #{endDate}
+        </if>
+        ORDER BY salesDate DESC, salesNo DESC
+    </select>
+
+    <select id="selectSalesDetailList" resultType="com.tklaundry.api.sales.sales.model.SalesDetail">
+        SELECT
+            SalesNo       AS salesNo,
+            SalesSeq      AS salesSeq,
+            ProductCode   AS productCode,
+            ProcessCode   AS processCode,
+            Price         AS price,
+            Qty           AS qty,
+            Discount      AS discount,
+            Cost          AS cost,
+            OrderNo       AS orderNo,
+            OrderSeq      AS orderSeq,
+            DeliveryNo    AS deliveryNo,
+            DeliverySeq   AS deliverySeq,
+            Remark        AS remark
+        FROM SalesDetail
+        WHERE SalesNo = #{salesNo}
+        ORDER BY SalesSeq
+    </select>
+
+    <select id="selectPendingPaymentList" resultType="com.tklaundry.api.sales.sales.dto.PendingPaymentItem">
+        SELECT DISTINCT
+            sm.SalesNo     AS salesNo,
+            sm.CustCode    AS custCode,
+            sm.Qty         AS qty,
+            sm.Discount    AS discount,
+            sm.Cost        AS cost,
+            sm.BankingYn   AS bankingYn,
+            sm.Status      AS status,
+            dm.DeliveryDate AS deliveryDate
+        FROM SalesMaster sm
+        INNER JOIN SalesDetail sd ON sd.SalesNo = sm.SalesNo
+        INNER JOIN DeliveryMaster dm ON dm.DeliveryNo = sd.DeliveryNo
+        <where>
+            sm.SalesYn = 'N'
+            <if test="custCode != null and custCode != ''">
+                AND sm.CustCode = #{custCode}
+            </if>
+        </where>
+        ORDER BY dm.DeliveryDate DESC, sm.SalesNo DESC
+    </select>
+
+    <update id="updateSalesMasterOnPayment">
+        UPDATE SalesMaster
+        SET SalesDate = GETDATE(),
+            SalesYn = 'Y',
+            BankingYn = #{bankingYn},
+            UpdateDate = GETDATE(),
+            UpdateUserID = #{updateUserId}
+        WHERE SalesNo = #{salesNo}
+    </update>
+
+    <update id="updateOrderDetailRemarkOnPayment">
+        UPDATE OrderDetail
+        SET Remark = #{remark}
+        WHERE OrderNo = #{orderNo}
+          AND OrderSeq = #{orderSeq}
+    </update>
+
+    <select id="selectSalesNoByOrderNo" resultType="string">
+        SELECT TOP 1 SalesNo
+        FROM SalesDetail
+        WHERE OrderNo = #{orderNo}
+    </select>
+
+    <select id="selectSalesDateBySalesNo" resultType="java.time.LocalDateTime">
+        SELECT SalesDate
+        FROM SalesMaster
+        WHERE SalesNo = #{salesNo}
+    </select>
+
+    <update id="upsertSalesMaster">
+        IF EXISTS (
+            SELECT SalesNo
+            FROM SalesMaster
+            WHERE SalesNo = #{salesNo}
+        )
+            UPDATE SalesMaster
+            SET SalesDate = #{salesDate},
+                CustCode = #{custCode},
+                Qty = #{qty},
+                Discount = #{discount},
+                Cost = #{cost},
+                BankingYn = #{bankingYn},
+                Status = #{status},
+                SalesYn = #{salesYn},
+                UpdateDate = GETDATE(),
+                UpdateUserID = #{updateUserId}
+            WHERE SalesNo = #{salesNo}
+        ELSE
+            INSERT INTO SalesMaster (
+                SalesNo,
+                SalesDate,
+                CustCode,
+                Qty,
+                Discount,
+                Cost,
+                BankingYn,
+                Status,
+                SalesYn,
+                InsertDate,
+                InsertUserID
+            ) VALUES (
+                #{salesNo},
+                #{salesDate},
+                #{custCode},
+                #{qty},
+                #{discount},
+                #{cost},
+                #{bankingYn},
+                #{status},
+                #{salesYn},
+                GETDATE(),
+                #{insertUserId}
+            )
+    </update>
+
+    <update id="upsertSalesDetail">
+        IF EXISTS (
+            SELECT SalesNo, SalesSeq
+            FROM SalesDetail
+            WHERE SalesNo = #{salesNo}
+              AND SalesSeq = #{salesSeq}
+        )
+            UPDATE SalesDetail
+            SET ProductCode = #{productCode},
+                ProcessCode = #{processCode},
+                Price = #{price},
+                Qty = #{qty},
+                Discount = #{discount},
+                Cost = #{cost},
+                OrderNo = #{orderNo},
+                OrderSeq = #{orderSeq},
+                DeliveryNo = #{deliveryNo},
+                DeliverySeq = #{deliverySeq},
+                Remark = #{remark}
+            WHERE SalesNo = #{salesNo}
+              AND SalesSeq = #{salesSeq}
+        ELSE
+            INSERT INTO SalesDetail (
+                SalesNo,
+                SalesSeq,
+                ProductCode,
+                ProcessCode,
+                Price,
+                Qty,
+                Discount,
+                Cost,
+                OrderNo,
+                OrderSeq,
+                DeliveryNo,
+                DeliverySeq,
+                Remark
+            ) VALUES (
+                #{salesNo},
+                #{salesSeq},
+                #{productCode},
+                #{processCode},
+                #{price},
+                #{qty},
+                #{discount},
+                #{cost},
+                #{orderNo},
+                #{orderSeq},
+                #{deliveryNo},
+                #{deliverySeq},
+                #{remark}
+            )
+    </update>
+
+    <delete id="deleteSalesDetailsByOrderNoAndSeqGreaterThan">
+        DELETE FROM SalesDetail
+        WHERE OrderNo = #{orderNo}
+          AND OrderSeq &gt; #{maxSeq}
+    </delete>
+
+    <delete id="deleteSalesDetailsBySalesNo">
+        DELETE FROM SalesDetail
+        WHERE SalesNo = #{salesNo}
+    </delete>
+
+    <delete id="deleteSalesMaster">
+        DELETE FROM SalesMaster
+        WHERE SalesNo = #{salesNo}
+    </delete>
+
+</mapper>
