@@ -17,6 +17,17 @@
         ORDER BY ExpendDate DESC, IDX DESC
     </select>
 
+    <select id="selectExpendByIdx" resultType="com.tklaundry.api.sales.expend.model.Expend">
+        SELECT
+            IDX         AS idx,
+            ExpendDate  AS expendDate,
+            ExpendCode  AS expendCode,
+            Cost        AS cost,
+            Remark      AS remark
+        FROM Expend
+        WHERE IDX = #{idx}
+    </select>
+
     <insert id="insertExpend" useGeneratedKeys="true" keyProperty="idx" keyColumn="IDX">
         INSERT INTO Expend (
             ExpendDate,

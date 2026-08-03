@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/expend_api.dart';
+import '../domain/expend.dart';
 import '../domain/expend_list_result.dart';
 
 class ExpendSearchParams {
@@ -36,4 +37,8 @@ class ExpendListNotifier extends AutoDisposeAsyncNotifier<ExpendListResult> {
 final expendListProvider = AsyncNotifierProvider.autoDispose<
     ExpendListNotifier, ExpendListResult>(
   ExpendListNotifier.new,
+);
+
+final expendDetailProvider = FutureProvider.autoDispose.family<Expend, int>(
+  (ref, idx) => ExpendApi().getExpend(idx),
 );

@@ -24,6 +24,15 @@ class ExpendApi {
     return ExpendListResult.fromJson(body);
   }
 
+  Future<Expend> getExpend(int idx) async {
+    final body = await _client.get(
+      '/expends/$idx',
+      fallbackMessage: '지출 상세를 불러오지 못했습니다.',
+    );
+
+    return Expend.fromJson(body);
+  }
+
   Future<Expend> registerExpend({
     required DateTime expendDate,
     required String expendCode,

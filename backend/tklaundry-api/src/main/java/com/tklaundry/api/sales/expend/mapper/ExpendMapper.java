@@ -15,6 +15,8 @@ public interface ExpendMapper {
 			@Param("startDate") LocalDate startDate,
 			@Param("endDate") LocalDate endDate);
 
+	Expend selectExpendByIdx(@Param("idx") int idx);
+
 	void insertExpend(Expend expend);
 
 	void updateExpend(Expend expend);

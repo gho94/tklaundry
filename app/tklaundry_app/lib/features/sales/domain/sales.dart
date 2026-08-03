@@ -34,4 +34,6 @@ class Sales {
       salesYn: json['salesYn'] as String? ?? '',
     );
   }
+
+  bool get isExpendRow => !salesNo.contains('S');
 }

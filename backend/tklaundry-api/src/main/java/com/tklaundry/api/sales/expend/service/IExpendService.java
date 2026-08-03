@@ -10,6 +10,8 @@ public interface IExpendService {
 
 	ExpendListResponse listExpends(LocalDate startDate, LocalDate endDate);
 
+	Expend getExpend(int idx);
+
 	Expend registerExpend(ExpendRequest request);
 
 	void updateExpend(int idx, ExpendRequest request);

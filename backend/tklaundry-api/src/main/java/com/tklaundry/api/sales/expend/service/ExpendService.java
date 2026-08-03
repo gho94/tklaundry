@@ -23,13 +23,18 @@ public class ExpendService implements IExpendService {
 
 	@Override
 	public ExpendListResponse listExpends(LocalDate startDate, LocalDate endDate) {
-		List<Expend> items = expendMapper.selectExpendList(startDate, endDate);
+		List<Expend> items = expendMapper.selectExpendList(startDate, endDate.plusDays(1));
 
 		int totalAmount = items.stream()
 				.mapToInt(expend -> expend.getCost() != null ? expend.getCost() : 0)
 				.sum();
 
 		return new ExpendListResponse(items, items.size(), totalAmount);
+	}
+
+	@Override
+	public Expend getExpend(int idx) {
+		return expendMapper.selectExpendByIdx(idx);
 	}
 
 	@Override

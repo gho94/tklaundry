@@ -42,7 +42,7 @@ class _SalesViewPageState extends ConsumerState<SalesViewPage> {
   late DateTime _endDate;
   String? _selectedCustCode;
   int? _selectedRowIndex;
-  String? _selectedSalesNo;
+  Sales? _selectedSales;
   bool _initialized = false;
 
   List<Customer> _customers = [];
@@ -122,7 +122,7 @@ class _SalesViewPageState extends ConsumerState<SalesViewPage> {
   Future<void> _search() async {
     setState(() {
       _selectedRowIndex = null;
-      _selectedSalesNo = null;
+      _selectedSales = null;
     });
     await ref.read(salesViewListProvider.notifier).search(
           SalesSearchParams(
@@ -158,6 +158,7 @@ class _SalesViewPageState extends ConsumerState<SalesViewPage> {
   }
 
   String _customerName(String custCode) {
+    if (custCode.isEmpty) return '';
     return _customerByCode[custCode]?.custName ?? custCode;
   }
 
@@ -174,7 +175,7 @@ class _SalesViewPageState extends ConsumerState<SalesViewPage> {
   void _selectSales(Sales sales, int index) {
     setState(() {
       _selectedRowIndex = index;
-      _selectedSalesNo = sales.salesNo;
+      _selectedSales = sales;
     });
   }
 
@@ -322,10 +323,10 @@ class _SalesViewPageState extends ConsumerState<SalesViewPage> {
         Expanded(
           flex: 2,
           child: TkGridPanel(
-            child: _selectedSalesNo == null
-                ? const Center(child: Text('매출 건을 선택하면 상세가 표시됩니다.'))
+            child: _selectedSales == null
+                ? const Center(child: Text('항목을 선택하면 상세가 표시됩니다.'))
                 : SalesViewDetailPanel(
-                    salesNo: _selectedSalesNo!,
+                    sales: _selectedSales!,
                     codes: codes,
                     productName: _productName,
                   ),

@@ -34,6 +34,11 @@ public class ExpendController {
 		return ResponseEntity.ok(expendService.listExpends(startDate, endDate));
 	}
 
+	@GetMapping("/{idx}")
+	public ResponseEntity<Expend> getExpend(@PathVariable("idx") int idx) {
+		return ResponseEntity.ok(expendService.getExpend(idx));
+	}
+
 	@PostMapping
 	public ResponseEntity<Expend> registerExpend(@RequestBody ExpendRequest request) {
 		Expend created = expendService.registerExpend(request);

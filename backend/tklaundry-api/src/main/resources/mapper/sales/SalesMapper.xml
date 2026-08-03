@@ -15,14 +15,28 @@
             Status      AS status,
             SalesYn     AS salesYn
         FROM SalesMaster
-        <where>
-            SalesYn = 'Y'
-            AND BankingYn = 'N'
-            <if test="custCode != null and custCode != ''">
-                AND CustCode = #{custCode}
-            </if>
-            AND SalesDate BETWEEN #{startDate} AND #{endDate}
-        </where>
+        WHERE SalesYn = 'Y'
+          AND BankingYn = 'N'
+          <if test="custCode != null and custCode != ''">
+              AND CustCode = #{custCode}
+          </if>
+          AND SalesDate BETWEEN #{startDate} AND #{endDate}
+        <if test="custCode == null or custCode == ''">
+        UNION ALL
+        SELECT
+            CONVERT(VARCHAR(11), IDX)     AS salesNo,
+            CAST(ExpendDate AS DATETIME)  AS salesDate,
+            ''                            AS custCode,
+            0                             AS qty,
+            0                             AS discount,
+            -Cost                         AS cost,
+            ''                            AS bankingYn,
+            ''                            AS status,
+            ''                            AS salesYn
+        FROM Expend
+        WHERE ExpendDate BETWEEN #{startDate} AND #{endDate}
+        </if>
+        ORDER BY salesDate DESC, salesNo DESC
     </select>
 
     <select id="selectSalesDetailList" resultType="com.tklaundry.api.sales.sales.model.SalesDetail">
