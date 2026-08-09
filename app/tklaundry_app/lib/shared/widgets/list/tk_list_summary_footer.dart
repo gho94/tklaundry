@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../shared/utils/tk_format.dart';
+import '../../utils/tk_format.dart';
 
-class DeliverySummaryFooter extends StatelessWidget {
-  const DeliverySummaryFooter({
+class TkListSummaryFooter extends StatelessWidget {
+  const TkListSummaryFooter({
     super.key,
     this.count,
     this.totalAmount,

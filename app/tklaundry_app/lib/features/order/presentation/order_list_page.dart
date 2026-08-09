@@ -16,7 +16,7 @@ import '../domain/order.dart';
 import '../domain/order_detail.dart';
 import 'order_list_detail_panel.dart';
 import 'order_list_master_panel.dart';
-import 'order_list_summary_footer.dart';
+import '../../../shared/widgets/list/tk_list_summary_footer.dart';
 import 'order_list_toolbar.dart';
 import 'order_provider.dart';
 import 'order_register_dialog.dart';
@@ -347,7 +347,10 @@ class _OrderListPageState extends ConsumerState<OrderListPage> {
         ),
         if (_selectedCustCode != null) ...[
           const SizedBox(height: 8),
-          OrderListSummaryFooter(result: orderListAsync.asData?.value),
+          TkListSummaryFooter(
+            count: orderListAsync.asData?.value.count,
+            totalAmount: orderListAsync.asData?.value.totalAmount,
+          ),
         ],
         const SizedBox(height: 12),
         Expanded(

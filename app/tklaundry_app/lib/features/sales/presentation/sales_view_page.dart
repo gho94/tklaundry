@@ -7,7 +7,7 @@ import '../../../shared/widgets/tk_grid_panel.dart';
 import '../../code/presentation/code_provider.dart';
 import '../../customer/data/customer_api.dart';
 import '../../customer/domain/customer.dart';
-import '../../delivery/presentation/delivery_summary_footer.dart';
+import '../../../shared/widgets/list/tk_list_summary_footer.dart';
 import '../../product/data/product_api.dart';
 import '../domain/sales.dart';
 import 'pending_payment_dialog.dart';
@@ -220,7 +220,7 @@ class _SalesViewPageState extends ConsumerState<SalesViewPage> {
         ),
         if (_selectedCustCode != null) ...[
           const SizedBox(height: 8),
-          DeliverySummaryFooter(
+          TkListSummaryFooter(
             count: salesViewListAsync.asData?.value.count,
             totalAmount: salesViewListAsync.asData?.value.totalAmount,
           ),

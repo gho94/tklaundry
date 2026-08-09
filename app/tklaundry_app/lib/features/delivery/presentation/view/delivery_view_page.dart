@@ -10,7 +10,7 @@ import '../../../customer/domain/customer.dart';
 import '../../../product/data/product_api.dart';
 import '../../domain/delivery.dart';
 import '../delivery_provider.dart';
-import '../delivery_summary_footer.dart';
+import '../../../../shared/widgets/list/tk_list_summary_footer.dart';
 import 'delivery_view_detail_panel.dart';
 import '../delivery_view_provider.dart';
 import 'delivery_view_master_panel.dart';
@@ -208,7 +208,7 @@ class _DeliveryViewPageState extends ConsumerState<DeliveryViewPage> {
         ),
         if (_selectedCustCode != null) ...[
           const SizedBox(height: 8),
-          DeliverySummaryFooter(
+          TkListSummaryFooter(
             count: deliveryViewListAsync.asData?.value.count,
             totalAmount: deliveryViewListAsync.asData?.value.totalAmount,
           ),

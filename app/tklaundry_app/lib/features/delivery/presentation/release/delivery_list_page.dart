@@ -18,7 +18,7 @@ import '../../../product/data/product_api.dart';
 import '../../data/delivery_api.dart';
 import 'delivery_detail_panel.dart';
 import '../delivery_provider.dart';
-import '../delivery_summary_footer.dart';
+import '../../../../shared/widgets/list/tk_list_summary_footer.dart';
 import 'delivery_list_action_bar.dart';
 import 'delivery_list_master_panel.dart';
 import 'delivery_list_toolbar.dart';
@@ -319,7 +319,7 @@ class _DeliveryListPageState extends ConsumerState<DeliveryListPage> {
         ),
         if (_selectedCustCode != null) ...[
           const SizedBox(height: 8),
-          DeliverySummaryFooter(
+          TkListSummaryFooter(
             count: deliveryListAsync.asData?.value.count,
             totalAmount: deliveryListAsync.asData?.value.totalAmount,
           ),
