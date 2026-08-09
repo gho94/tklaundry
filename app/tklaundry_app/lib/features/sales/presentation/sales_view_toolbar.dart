@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/lookup/tk_lookup_field.dart';
 import '../../../shared/widgets/lookup/tk_lookup_item.dart';
+import '../../../shared/widgets/list/tk_date_field.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
-import '../../../shared/widgets/tk_text_field.dart';
 
 class SalesViewSearchToolbar extends StatelessWidget {
   const SalesViewSearchToolbar({
@@ -44,34 +44,16 @@ class SalesViewSearchToolbar extends StatelessWidget {
               ),
         ),
         const SizedBox(width: 24),
-        SizedBox(
-          width: 150,
-          child: GestureDetector(
-            onTap: onPickStartDate,
-            child: AbsorbPointer(
-              child: TkTextField(
-                label: '시작일',
-                readOnly: true,
-                controller: startDateController,
-                suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
-              ),
-            ),
-          ),
+        TkDateField(
+          label: '시작일',
+          controller: startDateController,
+          onTap: onPickStartDate,
         ),
         const SizedBox(width: 12),
-        SizedBox(
-          width: 150,
-          child: GestureDetector(
-            onTap: onPickEndDate,
-            child: AbsorbPointer(
-              child: TkTextField(
-                label: '종료일',
-                readOnly: true,
-                controller: endDateController,
-                suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
-              ),
-            ),
-          ),
+        TkDateField(
+          label: '종료일',
+          controller: endDateController,
+          onTap: onPickEndDate,
         ),
         const SizedBox(width: 12),
         SizedBox(
