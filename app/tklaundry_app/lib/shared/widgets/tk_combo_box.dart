@@ -198,38 +198,3 @@ class _TkComboBoxState<T> extends State<TkComboBox<T>> {
     );
   }
 }
-
-class TkGridComboBox<T> extends StatelessWidget {
-  const TkGridComboBox({
-    super.key,
-    required this.items,
-    this.value,
-    this.hint = '선택',
-    this.enabled = true,
-    this.showAllOption = true,
-    this.onChanged,
-  });
-
-  final List<TkComboItem<T>> items;
-  final T? value;
-  final String? hint;
-  final bool enabled;
-  final bool showAllOption;
-  final ValueChanged<T?>? onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: TkComboBox<T>(
-        items: items,
-        value: value,
-        hint: hint,
-        compact: true,
-        showAllOption: showAllOption,
-        enabled: enabled,
-        onChanged: onChanged,
-      ),
-    );
-  }
-}
