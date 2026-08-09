@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../shared/utils/tk_format.dart';
-import '../../../shared/widgets/tk_async_error_body.dart';
-import '../../../shared/widgets/tk_grid_table.dart';
-import '../../code/domain/code.dart';
-import '../../code/presentation/code_list_extensions.dart';
-import '../../order/domain/order_detail.dart';
-import 'delivery_provider.dart';
+import '../../../../shared/utils/tk_format.dart';
+import '../../../../shared/widgets/tk_async_error_body.dart';
+import '../../../../shared/widgets/tk_grid_table.dart';
+import '../../../code/domain/code.dart';
+import '../../../code/presentation/code_list_extensions.dart';
+import '../../../order/domain/order_detail.dart';
+import '../delivery_provider.dart';
 
 class DeliveryDetailPanel extends ConsumerStatefulWidget {
   const DeliveryDetailPanel({
