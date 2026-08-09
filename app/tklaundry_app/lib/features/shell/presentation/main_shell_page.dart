@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../shared/widgets/tk_sidebar.dart';
+import '../../../shared/widgets/sidebar/tk_sidebar.dart';
 import '../../auth/presentation/auth_provider.dart';
-import 'shell_menu_config.dart';
+import '../constants/menu.dart';
+import 'shell_menu.dart';
 
 class MainShellPage extends ConsumerStatefulWidget {
   const MainShellPage({super.key});
@@ -15,14 +16,14 @@ class MainShellPage extends ConsumerStatefulWidget {
 }
 
 class _MainShellPageState extends ConsumerState<MainShellPage> {
-  String? _selectedItemId;
+  MenuId? _selectedMenuId;
 
   void _logout() {
     ref.read(authProvider.notifier).logout();
   }
 
   void _onItemSelected(TkSidebarItem item) {
-    setState(() => _selectedItemId = item.id);
+    setState(() => _selectedMenuId = MenuId.fromId(item.id));
   }
 
   @override
@@ -36,7 +37,7 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
           TkSidebar(
             groups: ShellMenuConfig.mainGroups,
             bottomGroups: ShellMenuConfig.bottomGroups,
-            selectedItemId: _selectedItemId,
+            selectedItemId: _selectedMenuId?.id,
             onItemSelected: _onItemSelected,
           ),
           Expanded(
@@ -47,7 +48,7 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
                   userName: user?.userName ?? '',
                   onLogout: _logout,
                 ),
-                Expanded(child: _ShellContent(selectedItemId: _selectedItemId)),
+                Expanded(child: _ShellContent(selectedMenuId: _selectedMenuId)),
               ],
             ),
           ),
@@ -58,18 +59,18 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
 }
 
 class _ShellContent extends StatelessWidget {
-  const _ShellContent({required this.selectedItemId});
+  const _ShellContent({required this.selectedMenuId});
 
-  final String? selectedItemId;
+  final MenuId? selectedMenuId;
 
   @override
   Widget build(BuildContext context) {
-    final page = ShellMenuConfig.pageFor(selectedItemId);
-    if (page != null) {
+    final menuId = selectedMenuId;
+    if (menuId != null) {
       return Container(
         color: AppColors.neutral50,
         padding: const EdgeInsets.all(AppSpacing.s4),
-        child: page,
+        child: ShellMenuConfig.pageFor(menuId),
       );
     }
 
@@ -90,9 +91,7 @@ class _ShellContent extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.s4),
               Text(
-                selectedItemId == null
-                    ? '왼쪽 메뉴에서 항목을 선택하세요.'
-                    : '1단계에서 구현 예정입니다.',
+                '왼쪽 메뉴에서 항목을 선택하세요.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppColors.neutral600,
