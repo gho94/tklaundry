@@ -128,19 +128,16 @@ class _DeliveryViewPageState extends ConsumerState<DeliveryViewPage> {
     });
   }
 
-  Future<void> _pickDate({
-    required DateTime initialDate,
-    required ValueChanged<DateTime> onSelected,
-  }) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
-    if (picked == null || !mounted) return;
-    onSelected(DateTime(picked.year, picked.month, picked.day));
-    await _search();
+  void _onStartDateSelected(DateTime date) {
+    setState(() => _startDate = date);
+    _startDateController.text = date.toApiDate();
+    _search();
+  }
+
+  void _onEndDateSelected(DateTime date) {
+    setState(() => _endDate = date);
+    _endDateController.text = date.toApiDate();
+    _search();
   }
 
   String _customerName(String custCode) {
@@ -170,20 +167,10 @@ class _DeliveryViewPageState extends ConsumerState<DeliveryViewPage> {
         DeliveryViewSearchToolbar(
           startDateController: _startDateController,
           endDateController: _endDateController,
-          onPickStartDate: () => _pickDate(
-            initialDate: _startDate,
-            onSelected: (date) {
-              setState(() => _startDate = date);
-              _startDateController.text = date.toApiDate();
-            },
-          ),
-          onPickEndDate: () => _pickDate(
-            initialDate: _endDate,
-            onSelected: (date) {
-              setState(() => _endDate = date);
-              _endDateController.text = date.toApiDate();
-            },
-          ),
+          startDate: _startDate,
+          endDate: _endDate,
+          onStartDateSelected: _onStartDateSelected,
+          onEndDateSelected: _onEndDateSelected,
           customerLookupItems: _customerLookupItems,
           selectedCustCode: _selectedCustCode,
           customersReady: _customersReady,

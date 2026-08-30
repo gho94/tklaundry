@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/widgets/lookup/tk_lookup_field.dart';
 import '../../../../shared/widgets/lookup/tk_lookup_item.dart';
-import '../../../../shared/widgets/list/tk_date_field.dart';
+import '../../../../shared/widgets/list/tk_date_picker_overlay.dart';
 import '../../../../shared/widgets/tk_primary_button.dart';
 
 class DeliveryListSearchToolbar extends StatelessWidget {
@@ -10,8 +10,10 @@ class DeliveryListSearchToolbar extends StatelessWidget {
     super.key,
     required this.startDateController,
     required this.endDateController,
-    required this.onPickStartDate,
-    required this.onPickEndDate,
+    required this.startDate,
+    required this.endDate,
+    required this.onStartDateSelected,
+    required this.onEndDateSelected,
     required this.customerLookupItems,
     required this.selectedCustCode,
     required this.customersReady,
@@ -22,8 +24,10 @@ class DeliveryListSearchToolbar extends StatelessWidget {
 
   final TextEditingController startDateController;
   final TextEditingController endDateController;
-  final VoidCallback onPickStartDate;
-  final VoidCallback onPickEndDate;
+  final DateTime startDate;
+  final DateTime endDate;
+  final ValueChanged<DateTime> onStartDateSelected;
+  final ValueChanged<DateTime> onEndDateSelected;
   final List<TkLookupItem<String>> customerLookupItems;
   final String? selectedCustCode;
   final bool customersReady;
@@ -42,16 +46,18 @@ class DeliveryListSearchToolbar extends StatelessWidget {
               ),
         ),
         const SizedBox(width: 24),
-        TkDateField(
+        TkDatePickerField(
           label: '시작일',
           controller: startDateController,
-          onTap: onPickStartDate,
+          date: startDate,
+          onDateSelected: onStartDateSelected,
         ),
         const SizedBox(width: 12),
-        TkDateField(
+        TkDatePickerField(
           label: '종료일',
           controller: endDateController,
-          onTap: onPickEndDate,
+          date: endDate,
+          onDateSelected: onEndDateSelected,
         ),
         const SizedBox(width: 12),
         SizedBox(

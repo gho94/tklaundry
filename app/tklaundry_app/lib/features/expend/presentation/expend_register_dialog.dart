@@ -5,6 +5,7 @@ import '../../../core/constants/code_constants.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/utils/tk_format.dart';
+import '../../../shared/widgets/list/tk_date_picker_overlay.dart';
 import '../../../shared/widgets/tk_combo_box.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
 import '../../../shared/widgets/tk_text_field.dart';
@@ -87,21 +88,6 @@ class _ExpendRegisterDialogState extends ConsumerState<ExpendRegisterDialog> {
     return codes.comboItems(CodeConstants.expendType);
   }
 
-  Future<void> _pickExpendDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _expendDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
-    if (picked == null || !mounted) return;
-
-    setState(() {
-      _expendDate = DateTime(picked.year, picked.month, picked.day);
-      _expendDateController.text = _expendDate.toApiDate();
-    });
-  }
-
   Future<void> _submit() async {
     final expendCode = _expendCode;
     if (expendCode == null || expendCode.isEmpty) {
@@ -164,17 +150,17 @@ class _ExpendRegisterDialogState extends ConsumerState<ExpendRegisterDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              GestureDetector(
-                onTap: _pickExpendDate,
-                child: AbsorbPointer(
-                  child: TkTextField(
-                    label: '지출 일자',
-                    readOnly: true,
-                    controller: _expendDateController,
-                    suffixIcon:
-                        const Icon(Icons.calendar_today_outlined, size: 18),
-                  ),
-                ),
+              TkDatePickerField(
+                label: '지출 일자',
+                controller: _expendDateController,
+                date: _expendDate,
+                width: 360,
+                onDateSelected: (date) {
+                  setState(() {
+                    _expendDate = DateTime(date.year, date.month, date.day);
+                    _expendDateController.text = _expendDate.toApiDate();
+                  });
+                },
               ),
               const SizedBox(height: 12),
               TkComboBox<String>(
