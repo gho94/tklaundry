@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../tk_anchor_overlay.dart';
 import '../tk_dropdown_panel.dart';
 import 'tk_lookup_item.dart';
 import 'tk_lookup_panel.dart';
@@ -44,7 +45,7 @@ class _TkLookupFieldState<T> extends State<TkLookupField<T>> {
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
   final GlobalKey _fieldKey = GlobalKey();
-  TkDropdownOverlayController? _overlay;
+  TkAnchorOverlayController? _overlay;
   bool _overlayReady = false;
 
   String _filterQuery = '';
@@ -63,7 +64,7 @@ class _TkLookupFieldState<T> extends State<TkLookupField<T>> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_overlayReady) {
-      _overlay = TkDropdownOverlayController(context);
+      _overlay = TkAnchorOverlayController(context);
       _overlayReady = true;
     }
   }
@@ -179,12 +180,9 @@ class _TkLookupFieldState<T> extends State<TkLookupField<T>> {
     final overlay = _overlay;
     if (overlay == null || !mounted) return;
 
-    final renderBox = _fieldKey.currentContext?.findRenderObject() as RenderBox?;
-    final fieldWidth = renderBox?.size.width ?? 300;
-
     overlay.show(
-      width: _panelWidth(fieldWidth),
-      offsetY: tkDropdownOffsetY(fieldKey: _fieldKey, compact: false),
+      offsetY: tkAnchorOverlayOffsetY(fieldKey: _fieldKey),
+      wrapMaterial: true,
       panelBuilder: _buildPanel,
       onHide: _onOverlayDismissed,
     );
@@ -234,7 +232,7 @@ class _TkLookupFieldState<T> extends State<TkLookupField<T>> {
   Widget build(BuildContext context) {
     final overlay = _overlay;
 
-    return tkDropdownAnchorField(
+    return tkAnchorOverlayField(
       layerLink: overlay?.layerLink ?? LayerLink(),
       tapRegionGroup: overlay?.tapRegionGroup ?? this,
       child: TextField(

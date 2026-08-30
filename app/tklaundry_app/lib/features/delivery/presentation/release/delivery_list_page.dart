@@ -1,29 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/constants/code_constants.dart';
-import '../../../core/network/api_exception.dart';
-import '../../../shared/utils/tk_feedback.dart';
-import '../../../shared/utils/tk_format.dart';
-import '../../../shared/widgets/lookup/tk_lookup_field.dart';
-import '../../../shared/widgets/lookup/tk_lookup_item.dart';
-import '../../../shared/widgets/tk_async_error_body.dart';
-import '../../../shared/widgets/tk_combo_box.dart';
-import '../../../shared/widgets/tk_grid_panel.dart';
-import '../../../shared/widgets/tk_grid_table.dart';
-import '../../../shared/widgets/tk_primary_button.dart';
-import '../../../shared/widgets/tk_text_field.dart';
-import '../../code/domain/code.dart';
-import '../../code/presentation/code_list_extensions.dart';
-import '../../code/presentation/code_provider.dart';
-import '../../customer/data/customer_api.dart';
-import '../../customer/domain/customer.dart';
-import '../../order/domain/order.dart';
-import '../../product/data/product_api.dart';
-import '../data/delivery_api.dart';
+import '../../../../core/constants/code_constants.dart';
+import '../../../../core/network/api_exception.dart';
+import '../../../../shared/utils/tk_feedback.dart';
+import '../../../../shared/utils/tk_format.dart';
+import '../../../../shared/widgets/lookup/tk_lookup_item.dart';
+import '../../../../shared/widgets/tk_combo_box.dart';
+import '../../../../shared/widgets/tk_grid_panel.dart';
+import '../../../code/domain/code.dart';
+import '../../../code/presentation/code_list_extensions.dart';
+import '../../../code/presentation/code_provider.dart';
+import '../../../customer/data/customer_api.dart';
+import '../../../customer/domain/customer.dart';
+import '../../../order/domain/order.dart';
+import '../../../product/data/product_api.dart';
+import '../../data/delivery_api.dart';
 import 'delivery_detail_panel.dart';
-import 'delivery_provider.dart';
-import 'delivery_summary_footer.dart';
+import '../delivery_provider.dart';
+import '../../../../shared/widgets/list/tk_list_summary_footer.dart';
+import 'delivery_list_action_bar.dart';
+import 'delivery_list_master_panel.dart';
+import 'delivery_list_toolbar.dart';
 
 class DeliveryListPage extends ConsumerStatefulWidget {
   const DeliveryListPage({super.key});
@@ -33,16 +31,6 @@ class DeliveryListPage extends ConsumerStatefulWidget {
 }
 
 class _DeliveryListPageState extends ConsumerState<DeliveryListPage> {
-  static const _masterColumns = [
-    TkGridColumn(label: '접수 일자'),
-    TkGridColumn(label: '고객'),
-    TkGridColumn(label: '수량', numeric: true),
-    TkGridColumn(label: '할인', numeric: true),
-    TkGridColumn(label: '금액', numeric: true),
-    TkGridColumn(label: '결제 상태'),
-    TkGridColumn(label: '출고 일자'),
-  ];
-
   late DateTime _startDate;
   late DateTime _endDate;
   String? _selectedCustCode;
@@ -159,19 +147,16 @@ class _DeliveryListPageState extends ConsumerState<DeliveryListPage> {
     });
   }
 
-  Future<void> _pickDate({
-    required DateTime initialDate,
-    required ValueChanged<DateTime> onSelected,
-  }) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
-    if (picked == null || !mounted) return;
-    onSelected(DateTime(picked.year, picked.month, picked.day));
-    await _search();
+  void _onStartDateSelected(DateTime date) {
+    setState(() => _startDate = date);
+    _startDateController.text = date.toApiDate();
+    _search();
+  }
+
+  void _onEndDateSelected(DateTime date) {
+    setState(() => _endDate = date);
+    _endDateController.text = date.toApiDate();
+    _search();
   }
 
   String _customerName(String custCode) {
@@ -180,12 +165,6 @@ class _DeliveryListPageState extends ConsumerState<DeliveryListPage> {
 
   String _productName(String productCode) {
     return _productNameByCode[productCode] ?? productCode;
-  }
-
-  String _paymentStatusLabel(List<Code> codes, String statusCode) {
-    final label = codes.displayName(statusCode);
-    if (label == '일반') return '';
-    return label;
   }
 
   List<TkComboItem<String>> _statusItems(List<Code> codes) {
@@ -296,167 +275,57 @@ class _DeliveryListPageState extends ConsumerState<DeliveryListPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Text(
-              '출고',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
-            const SizedBox(width: 24),
-            SizedBox(
-              width: 150,
-              child: GestureDetector(
-                onTap: () => _pickDate(
-                  initialDate: _startDate,
-                  onSelected: (date) {
-                    setState(() => _startDate = date);
-                    _startDateController.text = date.toApiDate();
-                  },
-                ),
-                child: AbsorbPointer(
-                  child: TkTextField(
-                    label: '시작일',
-                    readOnly: true,
-                    controller: _startDateController,
-                    suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 150,
-              child: GestureDetector(
-                onTap: () => _pickDate(
-                  initialDate: _endDate,
-                  onSelected: (date) {
-                    setState(() => _endDate = date);
-                    _endDateController.text = date.toApiDate();
-                  },
-                ),
-                child: AbsorbPointer(
-                  child: TkTextField(
-                    label: '종료일',
-                    readOnly: true,
-                    controller: _endDateController,
-                    suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 220,
-              child: TkLookupField<String>(
-                label: '고객',
-                hint: '고객명 · 전화번호 검색',
-                primaryColumnLabel: '고객',
-                secondaryColumnLabel: '전화번호',
-                panelMinWidth: 360,
-                items: _customerLookupItems,
-                value: _selectedCustCode,
-                enabled: _customersReady,
-                showAllOption: true,
-                onChanged: (custCode) {
-                  setState(() => _selectedCustCode = custCode);
-                  _search();
-                },
-              ),
-            ),
-            const Spacer(),
-            TkPrimaryButton(
-              label: '조회',
-              variant: TkButtonVariant.outline,
-              icon: Icons.search,
-              isLoading: deliveryListAsync.isLoading,
-              onPressed:
-                  !_customersReady || deliveryListAsync.isLoading ? null : _search,
-            ),
-          ],
+        DeliveryListSearchToolbar(
+          startDateController: _startDateController,
+          endDateController: _endDateController,
+          startDate: _startDate,
+          endDate: _endDate,
+          onStartDateSelected: _onStartDateSelected,
+          onEndDateSelected: _onEndDateSelected,
+          customerLookupItems: _customerLookupItems,
+          selectedCustCode: _selectedCustCode,
+          customersReady: _customersReady,
+          onCustomerChanged: (custCode) {
+            setState(() => _selectedCustCode = custCode);
+            _search();
+          },
+          onSearch: _search,
+          isLoading: deliveryListAsync.isLoading,
         ),
         const SizedBox(height: 16),
         Expanded(
           flex: 3,
-          child: TkGridPanel(
-            child: !_customersReady
-                ? const Center(child: CircularProgressIndicator())
-                : deliveryListAsync.when(
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (error, _) => TkAsyncErrorBody(
-                      error: error,
-                      fallbackMessage: '출고 대상 접수 목록을 불러오지 못했습니다.',
-                    ),
-                    data: (result) => TkGridTable(
-                      columns: _masterColumns,
-                      itemCount: result.items.length,
-                      itemBuilder: (index) =>
-                          _buildMasterRow(codes, result.items[index]),
-                      selectedRowIndex: _selectedRowIndex,
-                      onRowTap: (index) {
-                        _selectOrder(result.items[index], index);
-                      },
-                    ),
-                  ),
+          child: DeliveryListMasterPanel(
+            customersReady: _customersReady,
+            deliveryListAsync: deliveryListAsync,
+            codes: codes,
+            customerName: _customerName,
+            selectedRowIndex: _selectedRowIndex,
+            onOrderSelected: _selectOrder,
           ),
         ),
         if (_selectedCustCode != null) ...[
           const SizedBox(height: 8),
-          DeliverySummaryFooter(
+          TkListSummaryFooter(
             count: deliveryListAsync.asData?.value.count,
             totalAmount: deliveryListAsync.asData?.value.totalAmount,
           ),
         ],
         if (_selectedOrderNo != null) ...[
           const SizedBox(height: 12),
-          Row(
-            children: [
-              SizedBox(
-                width: 120,
-                child: TkComboBox<String>(
-                  label: '결제 상태',
-                  items: statusItems,
-                  value: _statusCode,
-                  showAllOption: false,
-                  compact: true,
-                  enabled: statusItems.isNotEmpty && !_isSubmitting,
-                  onChanged: statusItems.isEmpty || _isSubmitting
-                      ? null
-                      : (value) {
-                          setState(() => _statusCode = value);
-                        },
-                ),
-              ),
-              const SizedBox(width: 4),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Checkbox(
-                    value: _bankingYn,
-                    visualDensity: VisualDensity.compact,
-                    onChanged: _isSubmitting
-                        ? null
-                        : (value) {
-                            setState(() => _bankingYn = value ?? false);
-                          },
-                  ),
-                  const Text('뱅킹'),
-                ],
-              ),
-              const Spacer(),
-              TkPrimaryButton(
-                label: '출고',
-                icon: Icons.local_shipping_outlined,
-                isLoading: _isSubmitting,
-                onPressed: _isSubmitting ||
-                        _selectedOrderSeqs.isEmpty ||
-                        statusItems.isEmpty
-                    ? null
-                    : () => _registerDelivery(codes),
-              ),
-            ],
+          DeliveryListActionBar(
+            statusItems: statusItems,
+            statusCode: _statusCode,
+            bankingYn: _bankingYn,
+            isSubmitting: _isSubmitting,
+            hasSelectedDetails: _selectedOrderSeqs.isNotEmpty,
+            onStatusChanged: (value) {
+              setState(() => _statusCode = value);
+            },
+            onBankingChanged: (value) {
+              setState(() => _bankingYn = value);
+            },
+            onRegister: () => _registerDelivery(codes),
           ),
         ],
         const SizedBox(height: 12),
@@ -477,17 +346,5 @@ class _DeliveryListPageState extends ConsumerState<DeliveryListPage> {
         ),
       ],
     );
-  }
-
-  List<Widget> _buildMasterRow(List<Code> codes, Order order) {
-    return [
-      Text(order.orderDate.toDisplayDateTime()),
-      Text(_customerName(order.custCode)),
-      Text(order.qty.formatted),
-      Text(order.discount.formatted),
-      Text(order.cost.formatted),
-      Text(_paymentStatusLabel(codes, order.status)),
-      Text(order.deliveryDate.toDisplayDateTime(hideUnassigned: true)),
-    ];
   }
 }

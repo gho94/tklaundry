@@ -1,34 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../shared/utils/tk_format.dart';
-import '../../../shared/widgets/lookup/tk_lookup_item.dart';
-import '../../../shared/widgets/tk_grid_panel.dart';
-import '../../code/presentation/code_provider.dart';
-import '../../customer/data/customer_api.dart';
-import '../../customer/domain/customer.dart';
-import '../../../shared/widgets/list/tk_list_summary_footer.dart';
-import '../../product/data/product_api.dart';
-import '../domain/sales.dart';
-import 'pending_payment_dialog.dart';
-import 'sales_view_detail_panel.dart';
-import 'sales_view_master_panel.dart';
-import 'sales_view_toolbar.dart';
-import 'sales_view_provider.dart';
+import '../../../../shared/utils/tk_format.dart';
+import '../../../../shared/widgets/lookup/tk_lookup_item.dart';
+import '../../../../shared/widgets/tk_grid_panel.dart';
+import '../../../code/presentation/code_provider.dart';
+import '../../../customer/data/customer_api.dart';
+import '../../../customer/domain/customer.dart';
+import '../../../product/data/product_api.dart';
+import '../../domain/delivery.dart';
+import '../delivery_provider.dart';
+import '../../../../shared/widgets/list/tk_list_summary_footer.dart';
+import 'delivery_view_detail_panel.dart';
+import '../delivery_view_provider.dart';
+import 'delivery_view_master_panel.dart';
+import 'delivery_view_toolbar.dart';
 
-class SalesViewPage extends ConsumerStatefulWidget {
-  const SalesViewPage({super.key});
+class DeliveryViewPage extends ConsumerStatefulWidget {
+  const DeliveryViewPage({super.key});
 
   @override
-  ConsumerState<SalesViewPage> createState() => _SalesViewPageState();
+  ConsumerState<DeliveryViewPage> createState() => _DeliveryViewPageState();
 }
 
-class _SalesViewPageState extends ConsumerState<SalesViewPage> {
+class _DeliveryViewPageState extends ConsumerState<DeliveryViewPage> {
   late DateTime _startDate;
   late DateTime _endDate;
   String? _selectedCustCode;
   int? _selectedRowIndex;
-  Sales? _selectedSales;
+  String? _selectedDeliveryNo;
   bool _initialized = false;
 
   List<Customer> _customers = [];
@@ -108,10 +108,10 @@ class _SalesViewPageState extends ConsumerState<SalesViewPage> {
   Future<void> _search() async {
     setState(() {
       _selectedRowIndex = null;
-      _selectedSales = null;
+      _selectedDeliveryNo = null;
     });
-    await ref.read(salesViewListProvider.notifier).search(
-          SalesSearchParams(
+    await ref.read(deliveryViewListProvider.notifier).search(
+          DeliverySearchParams(
             startDate: _startDate,
             endDate: _endDate,
             custCode: _selectedCustCode,
@@ -141,7 +141,6 @@ class _SalesViewPageState extends ConsumerState<SalesViewPage> {
   }
 
   String _customerName(String custCode) {
-    if (custCode.isEmpty) return '';
     return _customerByCode[custCode]?.custName ?? custCode;
   }
 
@@ -149,33 +148,23 @@ class _SalesViewPageState extends ConsumerState<SalesViewPage> {
     return _productNameByCode[productCode] ?? productCode;
   }
 
-  void _selectSales(Sales sales, int index) {
+  void _selectDelivery(Delivery delivery, int index) {
     setState(() {
       _selectedRowIndex = index;
-      _selectedSales = sales;
+      _selectedDeliveryNo = delivery.deliveryNo;
     });
-  }
-
-  Future<void> _openPendingPaymentDialog() async {
-    final paid = await PendingPaymentDialog.show(
-      context,
-      customers: _customers,
-    );
-    if (paid == true && mounted) {
-      await _search();
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final salesViewListAsync = ref.watch(salesViewListProvider);
+    final deliveryViewListAsync = ref.watch(deliveryViewListProvider);
     final codes = ref.watch(codeProvider);
     _ensureInitialSearch();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SalesViewSearchToolbar(
+        DeliveryViewSearchToolbar(
           startDateController: _startDateController,
           endDateController: _endDateController,
           startDate: _startDate,
@@ -189,37 +178,36 @@ class _SalesViewPageState extends ConsumerState<SalesViewPage> {
             setState(() => _selectedCustCode = custCode);
             _search();
           },
-          onPendingPayment: _openPendingPaymentDialog,
           onSearch: _search,
-          isLoading: salesViewListAsync.isLoading,
+          isLoading: deliveryViewListAsync.isLoading,
         ),
         const SizedBox(height: 16),
         Expanded(
           flex: 3,
-          child: SalesViewMasterPanel(
+          child: DeliveryViewMasterPanel(
             customersReady: _customersReady,
-            salesViewListAsync: salesViewListAsync,
+            deliveryViewListAsync: deliveryViewListAsync,
             codes: codes,
             customerName: _customerName,
             selectedRowIndex: _selectedRowIndex,
-            onSalesSelected: _selectSales,
+            onDeliverySelected: _selectDelivery,
           ),
         ),
         if (_selectedCustCode != null) ...[
           const SizedBox(height: 8),
           TkListSummaryFooter(
-            count: salesViewListAsync.asData?.value.count,
-            totalAmount: salesViewListAsync.asData?.value.totalAmount,
+            count: deliveryViewListAsync.asData?.value.count,
+            totalAmount: deliveryViewListAsync.asData?.value.totalAmount,
           ),
         ],
         const SizedBox(height: 12),
         Expanded(
           flex: 2,
           child: TkGridPanel(
-            child: _selectedSales == null
-                ? const Center(child: Text('항목을 선택하면 상세가 표시됩니다.'))
-                : SalesViewDetailPanel(
-                    sales: _selectedSales!,
+            child: _selectedDeliveryNo == null
+                ? const Center(child: Text('출고 건을 선택하면 상세가 표시됩니다.'))
+                : DeliveryViewDetailPanel(
+                    deliveryNo: _selectedDeliveryNo!,
                     codes: codes,
                     productName: _productName,
                   ),

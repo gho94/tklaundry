@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/utils/tk_format.dart';
+import '../../../shared/widgets/list/tk_date_picker_overlay.dart';
 import '../../../shared/widgets/tk_async_error_body.dart';
 import '../../../shared/widgets/tk_grid_panel.dart';
 import '../../../shared/widgets/tk_primary_button.dart';
-import '../../../shared/widgets/tk_text_field.dart';
 import '../domain/chart_unit.dart';
 import '../domain/sales_chart_item.dart';
 import 'sales_chart_bar_panel.dart';
@@ -71,21 +71,6 @@ class _SalesChartPageState extends ConsumerState<SalesChartPage> {
       if (!mounted) return;
       _search();
     });
-  }
-
-  Future<void> _pickDate({
-    required DateTime initialDate,
-    required ValueChanged<DateTime> onSelected,
-  }) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
-    if (picked == null || !mounted) return;
-    onSelected(DateTime(picked.year, picked.month, picked.day));
-    await _search();
   }
 
   void _selectUnit(ChartUnit unit) {
@@ -174,48 +159,30 @@ class _SalesChartPageState extends ConsumerState<SalesChartPage> {
                   ),
             ),
             const SizedBox(width: 24),
-            SizedBox(
-              width: 150,
-              child: GestureDetector(
-                onTap: () => _pickDate(
-                  initialDate: _startDate,
-                  onSelected: (date) {
-                    setState(() => _startDate = date);
-                    _startDateController.text = date.toApiDate();
-                  },
-                ),
-                child: AbsorbPointer(
-                  child: TkTextField(
-                    label: '시작일',
-                    readOnly: true,
-                    controller: _startDateController,
-                    suffixIcon:
-                        const Icon(Icons.calendar_today_outlined, size: 18),
-                  ),
-                ),
-              ),
+            TkDatePickerField(
+              label: '시작일',
+              controller: _startDateController,
+              date: _startDate,
+              onDateSelected: (date) {
+                setState(() {
+                  _startDate = DateTime(date.year, date.month, date.day);
+                  _startDateController.text = _startDate.toApiDate();
+                });
+                _search();
+              },
             ),
             const SizedBox(width: 12),
-            SizedBox(
-              width: 150,
-              child: GestureDetector(
-                onTap: () => _pickDate(
-                  initialDate: _endDate,
-                  onSelected: (date) {
-                    setState(() => _endDate = date);
-                    _endDateController.text = date.toApiDate();
-                  },
-                ),
-                child: AbsorbPointer(
-                  child: TkTextField(
-                    label: '종료일',
-                    readOnly: true,
-                    controller: _endDateController,
-                    suffixIcon:
-                        const Icon(Icons.calendar_today_outlined, size: 18),
-                  ),
-                ),
-              ),
+            TkDatePickerField(
+              label: '종료일',
+              controller: _endDateController,
+              date: _endDate,
+              onDateSelected: (date) {
+                setState(() {
+                  _endDate = DateTime(date.year, date.month, date.day);
+                  _endDateController.text = _endDate.toApiDate();
+                });
+                _search();
+              },
             ),
             const SizedBox(width: 16),
             TkPrimaryButton(

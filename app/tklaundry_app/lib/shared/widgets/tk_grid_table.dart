@@ -328,7 +328,7 @@ class _DataCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isInteractive = child is TkGridComboBox || child is TkComboBox;
+    final isInteractive = child is TkComboBox;
 
     return Container(
       width: width,
