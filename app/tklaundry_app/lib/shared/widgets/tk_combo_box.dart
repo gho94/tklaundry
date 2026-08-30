@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import 'tk_anchor_overlay.dart';
 import 'tk_dropdown_panel.dart';
 
 class TkComboItem<T> {
@@ -41,14 +42,14 @@ class TkComboBox<T> extends StatefulWidget {
 class _TkComboBoxState<T> extends State<TkComboBox<T>> {
   final FocusNode _focusNode = FocusNode();
   final GlobalKey _fieldKey = GlobalKey();
-  TkDropdownOverlayController? _overlay;
+  TkAnchorOverlayController? _overlay;
   bool _overlayReady = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_overlayReady) {
-      _overlay = TkDropdownOverlayController(context);
+      _overlay = TkAnchorOverlayController(context);
       _overlayReady = true;
     }
   }
@@ -129,8 +130,11 @@ class _TkComboBoxState<T> extends State<TkComboBox<T>> {
     final width = renderBox?.size.width ?? 240;
 
     overlay.show(
-      width: width,
-      offsetY: tkDropdownOffsetY(fieldKey: _fieldKey, compact: widget.compact),
+      offsetY: tkAnchorOverlayOffsetY(
+        fieldKey: _fieldKey,
+        compact: widget.compact,
+      ),
+      wrapMaterial: true,
       panelBuilder: () => TkDropdownPanel(
         width: width,
         showAllOption: widget.showAllOption,
@@ -157,7 +161,7 @@ class _TkComboBoxState<T> extends State<TkComboBox<T>> {
     final displayText = selected?.label ??
         (widget.showAllOption && widget.value == null ? '전체' : '');
 
-    return tkDropdownAnchorField(
+    return tkAnchorOverlayField(
       layerLink: overlay?.layerLink ?? LayerLink(),
       tapRegionGroup: overlay?.tapRegionGroup ?? this,
       child: Focus(

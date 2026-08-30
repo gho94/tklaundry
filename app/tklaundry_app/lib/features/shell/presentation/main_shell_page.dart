@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/widgets/sidebar/tk_sidebar.dart';
@@ -77,29 +76,26 @@ class _ShellContent extends StatelessWidget {
     return Container(
       color: AppColors.neutral50,
       alignment: Alignment.center,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.s6),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.touch_app_outlined,
-                size: 48,
-                color: AppColors.neutral400,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.touch_app_outlined,
+              size: 48,
+              color: AppColors.neutral400,
+            ),
+            const SizedBox(height: AppSpacing.s4),
+            Text(
+              '왼쪽 메뉴에서 항목을 선택하세요.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.neutral600,
+                height: 1.5,
               ),
-              const SizedBox(height: AppSpacing.s4),
-              Text(
-                '왼쪽 메뉴에서 항목을 선택하세요.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.neutral600,
-                      height: 1.5,
-                    ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
