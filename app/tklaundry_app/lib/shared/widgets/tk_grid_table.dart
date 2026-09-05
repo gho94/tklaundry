@@ -54,6 +54,8 @@ class TkGridTable extends StatelessWidget {
     this.onRowDoubleTap,
     this.onRowSecondaryTap,
     this.selectedRowIndex,
+    this.showRowNumber = false,
+    this.rowNumberWidth = 50,
   }) : assert(
           rows != null || (itemCount != null && itemBuilder != null),
           'rows 또는 itemCount·itemBuilder가 필요합니다.',
@@ -71,6 +73,12 @@ class TkGridTable extends StatelessWidget {
   final void Function(int index)? onRowDoubleTap;
   final void Function(int index)? onRowSecondaryTap;
   final int? selectedRowIndex;
+
+  /// 레거시 DevExpress `ShowIndicator` — 왼쪽 행번호 (1부터).
+  final bool showRowNumber;
+
+  /// 레거시 `IndicatorWidth` 기본 50.
+  final double rowNumberWidth;
 
   static const _borderSide = BorderSide(color: AppColors.border, width: 1);
 
@@ -103,6 +111,8 @@ class TkGridTable extends StatelessWidget {
               widths: columnWidths,
               height: headerHeight,
               headerCellBuilder: headerCellBuilder,
+              showRowNumber: showRowNumber,
+              rowNumberWidth: rowNumberWidth,
             ),
             Expanded(
               child: DecoratedBox(
@@ -122,6 +132,8 @@ class TkGridTable extends StatelessWidget {
                       widths: columnWidths,
                       selected: selectedRowIndex == index,
                       rowHeight: rowHeight,
+                      rowNumber: showRowNumber ? index + 1 : null,
+                      rowNumberWidth: rowNumberWidth,
                       onTap: onRowTap == null
                           ? null
                           : () => onRowTap!(index),
@@ -143,13 +155,15 @@ class TkGridTable extends StatelessWidget {
   }
 
   List<double> _buildColumnWidths(double totalWidth) {
-    var remaining = totalWidth;
+    final contentWidth =
+        showRowNumber ? totalWidth - rowNumberWidth : totalWidth;
+    var remaining = contentWidth;
 
     for (final column in columns) {
       if (column.width != null) {
         remaining -= column.width!;
       } else if (column.flexRatio != null) {
-        remaining -= totalWidth * column.flexRatio!;
+        remaining -= contentWidth * column.flexRatio!;
       }
     }
 
@@ -164,7 +178,7 @@ class TkGridTable extends StatelessWidget {
         if (column.width != null)
           column.width!
         else if (column.flexRatio != null)
-          totalWidth * column.flexRatio!
+          contentWidth * column.flexRatio!
         else
           equalWidth,
     ];
@@ -177,12 +191,16 @@ class _HeaderRow extends StatelessWidget {
     required this.widths,
     required this.height,
     this.headerCellBuilder,
+    this.showRowNumber = false,
+    this.rowNumberWidth = 50,
   });
 
   final List<TkGridColumn> columns;
   final List<double> widths;
   final double height;
   final TkGridHeaderCellBuilder? headerCellBuilder;
+  final bool showRowNumber;
+  final double rowNumberWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -200,6 +218,11 @@ class _HeaderRow extends StatelessWidget {
         height: height,
         child: Row(
           children: [
+            if (showRowNumber)
+              _RowNumberCell(
+                width: rowNumberWidth,
+                isHeader: true,
+              ),
             for (var i = 0; i < columns.length; i++)
               _HeaderCell(
                 column: columns[i],
@@ -263,6 +286,8 @@ class _DataRow extends StatelessWidget {
     this.onTap,
     this.onDoubleTap,
     this.onSecondaryTap,
+    this.rowNumber,
+    this.rowNumberWidth = 50,
   });
 
   final List<Widget> cells;
@@ -270,6 +295,8 @@ class _DataRow extends StatelessWidget {
   final List<double> widths;
   final bool selected;
   final double rowHeight;
+  final int? rowNumber;
+  final double rowNumberWidth;
   final VoidCallback? onTap;
   final VoidCallback? onDoubleTap;
   final VoidCallback? onSecondaryTap;
@@ -287,6 +314,11 @@ class _DataRow extends StatelessWidget {
         height: rowHeight,
         child: Row(
           children: [
+            if (rowNumber != null)
+              _RowNumberCell(
+                width: rowNumberWidth,
+                number: rowNumber,
+              ),
             for (var i = 0; i < columns.length; i++)
               _DataCell(
                 column: columns[i],
@@ -344,6 +376,42 @@ class _DataCell extends StatelessWidget {
       child: Align(
         alignment: _alignment(column.align, column.numeric),
         child: child,
+      ),
+    );
+  }
+}
+
+class _RowNumberCell extends StatelessWidget {
+  const _RowNumberCell({
+    required this.width,
+    this.number,
+    this.isHeader = false,
+  });
+
+  final double width;
+  final int? number;
+  final bool isHeader;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      decoration: const BoxDecoration(
+        border: Border(right: TkGridTable._borderSide),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Align(
+        alignment: Alignment.center,
+        child: number == null
+            ? const SizedBox.shrink()
+            : Text(
+                '$number',
+                style: TextStyle(
+                  fontWeight: isHeader ? FontWeight.w600 : FontWeight.w500,
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
       ),
     );
   }
