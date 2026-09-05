@@ -5,6 +5,12 @@ import '../domain/delivery_list_result.dart';
 import '../../order/domain/order_detail.dart';
 import '../../order/domain/order_list_result.dart';
 
+class DeliveryLineEdit {
+  const DeliveryLineEdit({this.remark});
+
+  final String? remark;
+}
+
 class DeliveryDetailInput {
   const DeliveryDetailInput({
     required this.orderSeq,
@@ -26,7 +32,10 @@ class DeliveryDetailInput {
   final int cost;
   final String? remark;
 
-  factory DeliveryDetailInput.fromOrderDetail(OrderDetail detail) {
+  factory DeliveryDetailInput.fromOrderDetail(
+    OrderDetail detail, {
+    DeliveryLineEdit? edit,
+  }) {
     return DeliveryDetailInput(
       orderSeq: detail.orderSeq,
       productCode: detail.productCode,
@@ -35,7 +44,7 @@ class DeliveryDetailInput {
       qty: detail.qty,
       discount: detail.discount,
       cost: detail.cost,
-      remark: detail.remark,
+      remark: edit != null ? edit.remark : detail.remark,
     );
   }
 
