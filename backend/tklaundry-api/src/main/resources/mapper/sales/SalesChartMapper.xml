@@ -95,7 +95,7 @@
             ''                                  AS bankingYn
         FROM Expend
         WHERE CONVERT(CHAR(10), ExpendDate, 23) = #{salesDate}
-        ORDER BY salesDate DESC, salesNo DESC
+        ORDER BY salesNo
     </select>
 
 </mapper>

@@ -14,7 +14,7 @@
         <where>
             AND ExpendDate BETWEEN #{startDate} AND #{endDate}
         </where>
-        ORDER BY ExpendDate DESC, IDX DESC
+        ORDER BY IDX
     </select>
 
     <select id="selectExpendByIdx" resultType="com.tklaundry.api.sales.expend.model.Expend">
