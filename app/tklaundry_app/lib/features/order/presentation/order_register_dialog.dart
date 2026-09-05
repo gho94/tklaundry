@@ -315,6 +315,16 @@ class _OrderRegisterDialogState extends ConsumerState<OrderRegisterDialog> {
     _removeLineAt(index);
   }
 
+  void _addQtyOffsetLine() {
+    if (_isSubmitting) return;
+    final line = _DetailLine.qtyOffset();
+    line.addListeners(_onLineChanged);
+    setState(() {
+      _lines.add(line);
+      _errorMessage = null;
+    });
+  }
+
   void _removeLineAt(int index) {
     if (index < 0 || index >= _lines.length) return;
     final line = _lines.removeAt(index);
@@ -760,7 +770,14 @@ class _OrderRegisterDialogState extends ConsumerState<OrderRegisterDialog> {
                           ],
                         ),
                       ],
-                      const Spacer(),
+                      const Spacer(),          
+                      TkPrimaryButton(
+                        label: ' ',
+                        variant: TkButtonVariant.outline,
+                        icon: Icons.remove,
+                        onPressed: _isSubmitting ? null : _addQtyOffsetLine,
+                      ),                                  
+                      const SizedBox(width: 8),
                       if (_isEdit) ...[
                         TkPrimaryButton(
                           label: '삭제',
@@ -979,6 +996,17 @@ class _DetailLine {
     priceController =
         TextEditingController(text: (product.price ?? 0).toString());
     qtyController = TextEditingController(text: '1');
+    discountController = TextEditingController(text: '0');
+    remarkController = TextEditingController();
+  }
+
+  /// 레거시 `BtnMinus_Click` — 빈 행 Qty=-1 (수선+세탁 등 수량 이중 집계 상쇄).
+  _DetailLine.qtyOffset()
+      : productCode = '',
+        processCode = '',
+        productName = '' {
+    priceController = TextEditingController(text: '0');
+    qtyController = TextEditingController(text: '-1');
     discountController = TextEditingController(text: '0');
     remarkController = TextEditingController();
   }
