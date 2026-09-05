@@ -7,6 +7,7 @@ import '../../../../shared/widgets/tk_grid_table.dart';
 import '../../../code/domain/code.dart';
 import '../../../code/presentation/code_list_extensions.dart';
 import '../../../order/domain/order_detail.dart';
+import '../../data/delivery_api.dart';
 import '../delivery_provider.dart';
 
 class DeliveryDetailPanel extends ConsumerStatefulWidget {
@@ -15,7 +16,9 @@ class DeliveryDetailPanel extends ConsumerStatefulWidget {
     required this.orderNo,
     required this.codes,
     required this.productName,
+    this.enabled = true,
     this.onSelectionChanged,
+    this.onEditsChanged,
   });
 
   static const _columns = [
@@ -32,14 +35,18 @@ class DeliveryDetailPanel extends ConsumerStatefulWidget {
   final String orderNo;
   final List<Code> codes;
   final String Function(String productCode) productName;
+  final bool enabled;
   final ValueChanged<Set<int>>? onSelectionChanged;
+  final ValueChanged<Map<int, DeliveryLineEdit>>? onEditsChanged;
 
   @override
-  ConsumerState<DeliveryDetailPanel> createState() => _DeliveryDetailPanelState();
+  ConsumerState<DeliveryDetailPanel> createState() =>
+      _DeliveryDetailPanelState();
 }
 
 class _DeliveryDetailPanelState extends ConsumerState<DeliveryDetailPanel> {
   final Set<int> _selectedOrderSeqs = {};
+  final Map<int, TextEditingController> _remarkControllers = {};
   bool _selectionInitialized = false;
 
   @override
@@ -48,7 +55,58 @@ class _DeliveryDetailPanelState extends ConsumerState<DeliveryDetailPanel> {
     if (oldWidget.orderNo != widget.orderNo) {
       _selectedOrderSeqs.clear();
       _selectionInitialized = false;
+      _disposeLineControllers();
     }
+  }
+
+  @override
+  void dispose() {
+    _disposeLineControllers();
+    super.dispose();
+  }
+
+  void _disposeLineControllers() {
+    for (final controller in _remarkControllers.values) {
+      controller.dispose();
+    }
+    _remarkControllers.clear();
+  }
+
+  void _syncLineControllers(List<OrderDetail> details) {
+    final seqs = details.map((detail) => detail.orderSeq).toSet();
+    final removed = _remarkControllers.keys
+        .where((seq) => !seqs.contains(seq))
+        .toList();
+    for (final seq in removed) {
+      _remarkControllers.remove(seq)?.dispose();
+    }
+
+    for (final detail in details) {
+      _remarkControllers.putIfAbsent(
+        detail.orderSeq,
+        () => TextEditingController(text: detail.remark ?? '')
+          ..addListener(() => _onLineChanged(details)),
+      );
+    }
+  }
+
+  void _onLineChanged(List<OrderDetail> details) {
+    if (!mounted) return;
+    widget.onEditsChanged?.call(_editsOf(details));
+  }
+
+  Map<int, DeliveryLineEdit> _editsOf(List<OrderDetail> details) {
+    return {
+      for (final detail in details)
+        detail.orderSeq: DeliveryLineEdit(
+          remark: _remarkOf(detail.orderSeq),
+        ),
+    };
+  }
+
+  String? _remarkOf(int orderSeq) {
+    final value = _remarkControllers[orderSeq]?.text.trim() ?? '';
+    return value.isEmpty ? null : value;
   }
 
   void _scheduleSelectAll(List<OrderDetail> details) {
@@ -83,6 +141,7 @@ class _DeliveryDetailPanelState extends ConsumerState<DeliveryDetailPanel> {
           return const Center(child: Text('미출고 상세가 없습니다.'));
         }
 
+        _syncLineControllers(details);
         _scheduleSelectAll(details);
         final selectedOrderSeqs = _selectedForDisplay(details);
 
@@ -93,7 +152,9 @@ class _DeliveryDetailPanelState extends ConsumerState<DeliveryDetailPanel> {
             return Checkbox(
               tristate: true,
               value: _headerCheckboxValue(details, selectedOrderSeqs),
-              onChanged: (value) => _toggleSelectAll(details, value),
+              onChanged: widget.enabled
+                  ? (value) => _toggleSelectAll(details, value)
+                  : null,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               visualDensity: VisualDensity.compact,
             );
@@ -117,7 +178,9 @@ class _DeliveryDetailPanelState extends ConsumerState<DeliveryDetailPanel> {
     return [
       Checkbox(
         value: selectedOrderSeqs.contains(detail.orderSeq),
-        onChanged: (selected) => _toggleSelection(detail.orderSeq, selected),
+        onChanged: widget.enabled
+            ? (selected) => _toggleSelection(detail.orderSeq, selected)
+            : null,
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         visualDensity: VisualDensity.compact,
       ),
@@ -127,7 +190,10 @@ class _DeliveryDetailPanelState extends ConsumerState<DeliveryDetailPanel> {
       Text(detail.discount.formatted),
       Text(detail.cost.formatted),
       Text(detail.qty.formatted),
-      Text(detail.remark ?? ''),
+      _GridTextField(
+        controller: _remarkControllers[detail.orderSeq]!,
+        readOnly: !widget.enabled,
+      ),
     ];
   }
 
@@ -167,5 +233,29 @@ class _DeliveryDetailPanelState extends ConsumerState<DeliveryDetailPanel> {
       }
     });
     widget.onSelectionChanged?.call(Set.unmodifiable(_selectedOrderSeqs));
+  }
+}
+
+class _GridTextField extends StatelessWidget {
+  const _GridTextField({
+    required this.controller,
+    required this.readOnly,
+  });
+
+  final TextEditingController controller;
+  final bool readOnly;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      readOnly: readOnly,
+      style: Theme.of(context).textTheme.bodyMedium,
+      decoration: const InputDecoration(
+        isDense: true,
+        border: InputBorder.none,
+        contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      ),
+    );
   }
 }

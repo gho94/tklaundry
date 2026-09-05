@@ -38,6 +38,7 @@ class _DeliveryListPageState extends ConsumerState<DeliveryListPage> {
   String? _selectedOrderNo;
   Order? _selectedOrder;
   Set<int> _selectedOrderSeqs = {};
+  Map<int, DeliveryLineEdit> _detailEdits = {};
   String? _statusCode;
   bool _bankingYn = false;
   bool _defaultStatusApplied = false;
@@ -125,6 +126,7 @@ class _DeliveryListPageState extends ConsumerState<DeliveryListPage> {
       _selectedOrderNo = null;
       _selectedOrder = null;
       _selectedOrderSeqs = {};
+      _detailEdits = {};
       _statusCode = null;
       _bankingYn = false;
       _defaultStatusApplied = false;
@@ -190,6 +192,7 @@ class _DeliveryListPageState extends ConsumerState<DeliveryListPage> {
       _selectedOrderNo = order.orderNo;
       _selectedOrder = order;
       _selectedOrderSeqs = {};
+      _detailEdits = {};
       _statusCode = null;
       _bankingYn = order.bankingYn == 'Y';
       _defaultStatusApplied = false;
@@ -218,7 +221,12 @@ class _DeliveryListPageState extends ConsumerState<DeliveryListPage> {
       final details = await ref.read(deliveryDetailListProvider(orderNo).future);
       final selectedDetails = details
           .where((detail) => _selectedOrderSeqs.contains(detail.orderSeq))
-          .map(DeliveryDetailInput.fromOrderDetail)
+          .map(
+            (detail) => DeliveryDetailInput.fromOrderDetail(
+              detail,
+              edit: _detailEdits[detail.orderSeq],
+            ),
+          )
           .toList();
 
       if (selectedDetails.isEmpty) {
@@ -246,6 +254,7 @@ class _DeliveryListPageState extends ConsumerState<DeliveryListPage> {
         _selectedOrderNo = null;
         _selectedOrder = null;
         _selectedOrderSeqs = {};
+        _detailEdits = {};
         _statusCode = null;
         _bankingYn = false;
         _defaultStatusApplied = false;
@@ -338,8 +347,12 @@ class _DeliveryListPageState extends ConsumerState<DeliveryListPage> {
                     orderNo: _selectedOrderNo!,
                     codes: codes,
                     productName: _productName,
+                    enabled: !_isSubmitting,
                     onSelectionChanged: (orderSeqs) {
                       setState(() => _selectedOrderSeqs = Set.from(orderSeqs));
+                    },
+                    onEditsChanged: (edits) {
+                      _detailEdits = edits;
                     },
                   ),
           ),

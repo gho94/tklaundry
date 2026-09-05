@@ -28,7 +28,10 @@ class TkSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: AppLayout.sidebarWidth,
-      color: AppColors.secondary,
+      decoration: const BoxDecoration(
+        color: AppColors.neutral100,
+        border: Border(right: BorderSide(color: AppColors.border)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -38,7 +41,7 @@ class TkSidebar extends StatelessWidget {
             child: Text(
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.neutral0,
+                    color: AppColors.textPrimary,
                   ),
             ),
           ),
@@ -50,7 +53,7 @@ class TkSidebar extends StatelessWidget {
             ),
           ),
           if (bottomGroups.isNotEmpty) ...[
-            const Divider(color: AppColors.neutral600, height: 1),
+            const Divider(color: AppColors.border, height: 1),
             Padding(
               padding: const EdgeInsets.only(
                 top: AppSpacing.s2,
@@ -82,7 +85,7 @@ class TkSidebar extends StatelessWidget {
           ),
         if (i < sectionGroups.length - 1) ...[
           const SizedBox(height: AppSpacing.s2),
-          const Divider(color: AppColors.neutral600, height: 1),
+          const Divider(color: AppColors.border, height: 1),
           const SizedBox(height: AppSpacing.s2),
         ],
       ],
@@ -110,12 +113,12 @@ class _SidebarGroupLabel extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 14, color: AppColors.neutral400),
+          Icon(icon, size: 14, color: AppColors.textSecondary),
           const SizedBox(width: AppSpacing.s2),
           Text(
             label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.neutral400,
+                  color: AppColors.textSecondary,
                   letterSpacing: 0.5,
                 ),
           ),
@@ -138,10 +141,10 @@ class _SidebarNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? AppColors.neutral0 : AppColors.neutral400;
+    final color = isActive ? AppColors.primary : AppColors.textPrimary;
 
     return Material(
-      color: isActive ? AppColors.primary.withValues(alpha: 0.15) : Colors.transparent,
+      color: isActive ? AppColors.primaryMuted : Colors.transparent,
       child: InkWell(
         onTap: onTap,
         child: Container(

@@ -23,7 +23,7 @@
             </if>
             AND OrderDate BETWEEN #{startDate} AND #{endDate}
         </where>
-        ORDER BY OrderDate DESC, OrderNo DESC
+        ORDER BY OrderNo
     </select>
 
     <select id="selectDeliveryMasterList" resultType="com.tklaundry.api.sales.delivery.model.DeliveryMaster">
@@ -44,7 +44,7 @@
             </if>
             AND DeliveryDate BETWEEN #{startDate} AND #{endDate}
         </where>
-        ORDER BY DeliveryDate DESC, DeliveryNo DESC
+        ORDER BY DeliveryNo
     </select>
 
     <select id="selectOrderDetailList" resultType="com.tklaundry.api.sales.order.model.OrderDetail">

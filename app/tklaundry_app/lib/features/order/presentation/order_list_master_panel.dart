@@ -53,6 +53,7 @@ class OrderListMasterPanel extends StatelessWidget {
               ),
               data: (result) => TkGridTable(
                 columns: _masterColumns,
+                showRowNumber: true,
                 itemCount: result.items.length,
                 itemBuilder: (index) => _buildMasterRow(codes, result.items[index]),
                 selectedRowIndex: selectedRowIndex,
@@ -74,8 +75,14 @@ class OrderListMasterPanel extends StatelessWidget {
       Text(order.qty.formatted),
       Text(order.discount.formatted),
       Text(order.cost.formatted),
-      Text(codes.displayName(order.status)),
+      Text(_paymentStatusLabel(codes, order.status)),
       Text(order.deliveryDate.toDisplayDateTime(hideUnassigned: true)),
     ];
+  }
+
+  String _paymentStatusLabel(List<Code> codes, String statusCode) {
+    final label = codes.displayName(statusCode);
+    if (label == '일반') return '';
+    return label;
   }
 }

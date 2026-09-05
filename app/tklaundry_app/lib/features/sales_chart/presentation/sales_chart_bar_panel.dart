@@ -101,12 +101,16 @@ class SalesChartBarPanel extends StatelessWidget {
                 barRods: [
                   BarChartRodData(
                     toY: items[index].cost.toDouble(),
-                    fromY: items[index].cost < 0 ? items[index].cost.toDouble() : 0,
+                    fromY: 0,
                     color: AppColors.primary,
                     width: _barWidth(items.length),
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(3),
-                    ),
+                    borderRadius: items[index].cost < 0
+                        ? const BorderRadius.vertical(
+                            bottom: Radius.circular(3),
+                          )
+                        : const BorderRadius.vertical(
+                            top: Radius.circular(3),
+                          ),
                   ),
                 ],
               ),

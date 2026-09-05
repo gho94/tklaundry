@@ -39,6 +39,18 @@ typedef TkGridHeaderCellBuilder = Widget? Function(
   TkGridColumn column,
 );
 
+class TkGridGroup {
+  const TkGridGroup({
+    required this.label,
+    required this.itemCount,
+    this.summary,
+  });
+
+  final String label;
+  final int itemCount;
+  final String? summary;
+}
+
 class TkGridTable extends StatelessWidget {
   const TkGridTable({
     super.key,
@@ -54,6 +66,10 @@ class TkGridTable extends StatelessWidget {
     this.onRowDoubleTap,
     this.onRowSecondaryTap,
     this.selectedRowIndex,
+    this.showRowNumber = false,
+    this.rowNumberWidth = 50,
+    this.groups,
+    this.groupHeaderHeight = 36,
   }) : assert(
           rows != null || (itemCount != null && itemBuilder != null),
           'rows 또는 itemCount·itemBuilder가 필요합니다.',
@@ -71,6 +87,16 @@ class TkGridTable extends StatelessWidget {
   final void Function(int index)? onRowDoubleTap;
   final void Function(int index)? onRowSecondaryTap;
   final int? selectedRowIndex;
+
+  /// 레거시 DevExpress `ShowIndicator` — 왼쪽 행번호 (1부터).
+  final bool showRowNumber;
+
+  /// 레거시 `IndicatorWidth` 기본 50.
+  final double rowNumberWidth;
+
+  /// 연속 행 그룹 헤더. 지정 시 [itemBuilder] 순서가 그룹 순서와 같아야 한다.
+  final List<TkGridGroup>? groups;
+  final double groupHeaderHeight;
 
   static const _borderSide = BorderSide(color: AppColors.border, width: 1);
 
@@ -91,6 +117,9 @@ class TkGridTable extends StatelessWidget {
       );
     }
 
+    final entries = _listEntries();
+    final hasGroups = groups != null && groups!.isNotEmpty;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final columnWidths = _buildColumnWidths(constraints.maxWidth);
@@ -103,6 +132,8 @@ class TkGridTable extends StatelessWidget {
               widths: columnWidths,
               height: headerHeight,
               headerCellBuilder: headerCellBuilder,
+              showRowNumber: showRowNumber,
+              rowNumberWidth: rowNumberWidth,
             ),
             Expanded(
               child: DecoratedBox(
@@ -113,24 +144,35 @@ class TkGridTable extends StatelessWidget {
                   ),
                 ),
                 child: ListView.builder(
-                  itemCount: _length,
-                  itemExtent: rowHeight,
+                  itemCount: entries.length,
+                  itemExtent: hasGroups ? null : rowHeight,
                   itemBuilder: (context, index) {
+                    final entry = entries[index];
+                    if (entry.group != null) {
+                      return _GroupHeaderRow(
+                        group: entry.group!,
+                        height: groupHeaderHeight,
+                      );
+                    }
+
+                    final dataIndex = entry.dataIndex!;
                     return _DataRow(
-                      cells: _cellsAt(index),
+                      cells: _cellsAt(dataIndex),
                       columns: columns,
                       widths: columnWidths,
-                      selected: selectedRowIndex == index,
+                      selected: selectedRowIndex == dataIndex,
                       rowHeight: rowHeight,
+                      rowNumber: showRowNumber ? dataIndex + 1 : null,
+                      rowNumberWidth: rowNumberWidth,
                       onTap: onRowTap == null
                           ? null
-                          : () => onRowTap!(index),
+                          : () => onRowTap!(dataIndex),
                       onDoubleTap: onRowDoubleTap == null
                           ? null
-                          : () => onRowDoubleTap!(index),
+                          : () => onRowDoubleTap!(dataIndex),
                       onSecondaryTap: onRowSecondaryTap == null
                           ? null
-                          : () => onRowSecondaryTap!(index),
+                          : () => onRowSecondaryTap!(dataIndex),
                     );
                   },
                 ),
@@ -142,14 +184,34 @@ class TkGridTable extends StatelessWidget {
     );
   }
 
+  List<_ListEntry> _listEntries() {
+    if (groups == null || groups!.isEmpty) {
+      return [for (var i = 0; i < _length; i++) _ListEntry.data(i)];
+    }
+
+    final entries = <_ListEntry>[];
+    var offset = 0;
+    for (final group in groups!) {
+      if (group.itemCount <= 0) continue;
+      entries.add(_ListEntry.group(group));
+      for (var i = 0; i < group.itemCount; i++) {
+        entries.add(_ListEntry.data(offset + i));
+      }
+      offset += group.itemCount;
+    }
+    return entries;
+  }
+
   List<double> _buildColumnWidths(double totalWidth) {
-    var remaining = totalWidth;
+    final contentWidth =
+        showRowNumber ? totalWidth - rowNumberWidth : totalWidth;
+    var remaining = contentWidth;
 
     for (final column in columns) {
       if (column.width != null) {
         remaining -= column.width!;
       } else if (column.flexRatio != null) {
-        remaining -= totalWidth * column.flexRatio!;
+        remaining -= contentWidth * column.flexRatio!;
       }
     }
 
@@ -164,7 +226,7 @@ class TkGridTable extends StatelessWidget {
         if (column.width != null)
           column.width!
         else if (column.flexRatio != null)
-          totalWidth * column.flexRatio!
+          contentWidth * column.flexRatio!
         else
           equalWidth,
     ];
@@ -177,12 +239,16 @@ class _HeaderRow extends StatelessWidget {
     required this.widths,
     required this.height,
     this.headerCellBuilder,
+    this.showRowNumber = false,
+    this.rowNumberWidth = 50,
   });
 
   final List<TkGridColumn> columns;
   final List<double> widths;
   final double height;
   final TkGridHeaderCellBuilder? headerCellBuilder;
+  final bool showRowNumber;
+  final double rowNumberWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -200,6 +266,11 @@ class _HeaderRow extends StatelessWidget {
         height: height,
         child: Row(
           children: [
+            if (showRowNumber)
+              _RowNumberCell(
+                width: rowNumberWidth,
+                isHeader: true,
+              ),
             for (var i = 0; i < columns.length; i++)
               _HeaderCell(
                 column: columns[i],
@@ -263,6 +334,8 @@ class _DataRow extends StatelessWidget {
     this.onTap,
     this.onDoubleTap,
     this.onSecondaryTap,
+    this.rowNumber,
+    this.rowNumberWidth = 50,
   });
 
   final List<Widget> cells;
@@ -270,6 +343,8 @@ class _DataRow extends StatelessWidget {
   final List<double> widths;
   final bool selected;
   final double rowHeight;
+  final int? rowNumber;
+  final double rowNumberWidth;
   final VoidCallback? onTap;
   final VoidCallback? onDoubleTap;
   final VoidCallback? onSecondaryTap;
@@ -287,6 +362,11 @@ class _DataRow extends StatelessWidget {
         height: rowHeight,
         child: Row(
           children: [
+            if (rowNumber != null)
+              _RowNumberCell(
+                width: rowNumberWidth,
+                number: rowNumber,
+              ),
             for (var i = 0; i < columns.length; i++)
               _DataCell(
                 column: columns[i],
@@ -344,6 +424,102 @@ class _DataCell extends StatelessWidget {
       child: Align(
         alignment: _alignment(column.align, column.numeric),
         child: child,
+      ),
+    );
+  }
+}
+
+class _RowNumberCell extends StatelessWidget {
+  const _RowNumberCell({
+    required this.width,
+    this.number,
+    this.isHeader = false,
+  });
+
+  final double width;
+  final int? number;
+  final bool isHeader;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      decoration: const BoxDecoration(
+        border: Border(right: TkGridTable._borderSide),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Align(
+        alignment: Alignment.center,
+        child: number == null
+            ? const SizedBox.shrink()
+            : Text(
+                '$number',
+                style: TextStyle(
+                  fontWeight: isHeader ? FontWeight.w600 : FontWeight.w500,
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+class _ListEntry {
+  const _ListEntry._({this.group, this.dataIndex});
+
+  factory _ListEntry.group(TkGridGroup group) => _ListEntry._(group: group);
+
+  factory _ListEntry.data(int index) => _ListEntry._(dataIndex: index);
+
+  final TkGridGroup? group;
+  final int? dataIndex;
+}
+
+class _GroupHeaderRow extends StatelessWidget {
+  const _GroupHeaderRow({
+    required this.group,
+    required this.height,
+  });
+
+  final TkGridGroup group;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: AppColors.neutral100,
+        border: Border(bottom: TkGridTable._borderSide),
+      ),
+      child: SizedBox(
+        height: height,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  group.label,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              if (group.summary != null)
+                Text(
+                  group.summary!,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

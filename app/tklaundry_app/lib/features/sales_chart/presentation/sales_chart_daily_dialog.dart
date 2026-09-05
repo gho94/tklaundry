@@ -121,67 +121,132 @@ class _SalesChartDailyDialogState extends ConsumerState<SalesChartDailyDialog> {
     final dailyAsync =
         ref.watch(salesChartDailyProvider(widget.salesDate.toApiDate()));
 
-    return AlertDialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      title: Text('일매출 상세 · ${widget.salesDate.toApiDate()}'),
-      content: SizedBox(
-        width: 1200,
-        height: 640,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              flex: 3,
-              child: TkGridPanel(
-                child: dailyAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (error, _) => TkAsyncErrorBody(
-                    error: error,
-                    fallbackMessage: '일매출 상세를 불러오지 못했습니다.',
-                  ),
-                  data: (result) {
-                    if (result.items.isEmpty) {
-                      return const Center(child: Text('내역이 없습니다.'));
-                    }
+    final size = MediaQuery.sizeOf(context);
 
-                    return TkGridTable(
-                      columns: _columns,
-                      itemCount: result.items.length,
-                      itemBuilder: (index) =>
-                          _buildRow(codes, result.items[index]),
-                      selectedRowIndex: _selectedRowIndex,
-                      onRowTap: (index) {
-                        _selectItem(result.items[index], index);
-                      },
-                    );
-                  },
+    return Dialog(
+      insetPadding: const EdgeInsets.all(12),
+      clipBehavior: Clip.antiAlias,
+      child: SizedBox(
+        width: size.width,
+        height: size.height,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 12, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '일매출 상세 · ${widget.salesDate.toApiDate()}',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('닫기'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                flex: 4,
+                child: TkGridPanel(
+                  child: dailyAsync.when(
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (error, _) => TkAsyncErrorBody(
+                      error: error,
+                      fallbackMessage: '일매출 상세를 불러오지 못했습니다.',
+                    ),
+                    data: (result) {
+                      if (result.items.isEmpty) {
+                        return const Center(child: Text('내역이 없습니다.'));
+                      }
+
+                      final displayItems = _groupedItems(result.items);
+                      return TkGridTable(
+                        columns: _columns,
+                        groups: _groupsOf(displayItems),
+                        itemCount: displayItems.length,
+                        itemBuilder: (index) =>
+                            _buildRow(codes, displayItems[index]),
+                        selectedRowIndex: _selectedRowIndex,
+                        onRowTap: (index) {
+                          _selectItem(displayItems[index], index);
+                        },
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              flex: 2,
-              child: TkGridPanel(
-                child: _selectedItem == null
-                    ? const Center(child: Text('항목을 선택하면 상세가 표시됩니다.'))
-                    : SalesViewDetailPanel(
-                        sales: _selectedItem!.toSales(),
-                        codes: codes,
-                        productName: _productName,
-                      ),
+              const SizedBox(height: 12),
+              Expanded(
+                flex: 1,
+                child: TkGridPanel(
+                  child: _selectedItem == null
+                      ? const Center(child: Text('항목을 선택하면 상세가 표시됩니다.'))
+                      : SalesViewDetailPanel(
+                          sales: _selectedItem!.toSales(),
+                          codes: codes,
+                          productName: _productName,
+                        ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('닫기'),
-        ),
-      ],
     );
+  }
+
+  List<SalesChartDailyItem> _groupedItems(List<SalesChartDailyItem> items) {
+    final banking = <SalesChartDailyItem>[];
+    final notBanking = <SalesChartDailyItem>[];
+    final expend = <SalesChartDailyItem>[];
+    for (final item in items) {
+      if (item.isExpendRow) {
+        expend.add(item);
+      } else if (item.bankingYn == 'Y') {
+        banking.add(item);
+      } else {
+        notBanking.add(item);
+      }
+    }
+    return [...banking, ...notBanking, ...expend];
+  }
+
+  List<TkGridGroup> _groupsOf(List<SalesChartDailyItem> items) {
+    int sumCost(List<SalesChartDailyItem> rows) =>
+        rows.fold(0, (sum, item) => sum + item.cost);
+
+    final banking = items.where((item) => !item.isExpendRow && item.bankingYn == 'Y').toList();
+    final notBanking =
+        items.where((item) => !item.isExpendRow && item.bankingYn != 'Y').toList();
+    final expend = items.where((item) => item.isExpendRow).toList();
+
+    return [
+      if (banking.isNotEmpty)
+        TkGridGroup(
+          label: '뱅킹',
+          itemCount: banking.length,
+          summary: '${sumCost(banking).formatted}원',
+        ),
+      if (notBanking.isNotEmpty)
+        TkGridGroup(
+          label: '미뱅킹',
+          itemCount: notBanking.length,
+          summary: '${sumCost(notBanking).formatted}원',
+        ),
+      if (expend.isNotEmpty)
+        TkGridGroup(
+          label: '지출',
+          itemCount: expend.length,
+          summary: '${sumCost(expend).formatted}원',
+        ),
+    ];
   }
 
   List<Widget> _buildRow(List<Code> codes, SalesChartDailyItem item) {

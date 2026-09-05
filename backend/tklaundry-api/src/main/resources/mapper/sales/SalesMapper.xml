@@ -36,7 +36,6 @@
         FROM Expend
         WHERE ExpendDate BETWEEN #{startDate} AND #{endDate}
         </if>
-        ORDER BY salesDate DESC, salesNo DESC
     </select>
 
     <select id="selectSalesDetailList" resultType="com.tklaundry.api.sales.sales.model.SalesDetail">
@@ -78,7 +77,7 @@
                 AND sm.CustCode = #{custCode}
             </if>
         </where>
-        ORDER BY dm.DeliveryDate DESC, sm.SalesNo DESC
+        ORDER BY sm.SalesNo
     </select>
 
     <update id="updateSalesMasterOnPayment">

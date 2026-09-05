@@ -43,7 +43,7 @@ class DeliveryListActionBar extends StatelessWidget {
             onChanged: statusEnabled ? onStatusChanged : null,
           ),
         ),
-        const SizedBox(width: 4),
+        const Spacer(),        
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -58,8 +58,8 @@ class DeliveryListActionBar extends StatelessWidget {
             ),
             const Text('뱅킹'),
           ],
-        ),
-        const Spacer(),
+        ),        
+        const SizedBox(width: 4),
         TkPrimaryButton(
           label: '출고',
           icon: Icons.local_shipping_outlined,
