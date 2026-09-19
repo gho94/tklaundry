@@ -232,6 +232,7 @@ class _PendingPaymentDialogState extends ConsumerState<PendingPaymentDialog> {
             const SizedBox(height: 12),
             Row(
               children: [
+                const Spacer(),
                 Checkbox(
                   value: _bankingYn,
                   onChanged: _selectedItem == null || _isSubmitting
@@ -243,7 +244,7 @@ class _PendingPaymentDialogState extends ConsumerState<PendingPaymentDialog> {
                   visualDensity: VisualDensity.compact,
                 ),
                 const Text('뱅킹'),
-                const Spacer(),
+                const SizedBox(width: 12),
                 TkPrimaryButton(
                   label: '결제',
                   icon: Icons.payments_outlined,
