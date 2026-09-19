@@ -40,16 +40,13 @@ class SalesChartDailyDialog extends ConsumerStatefulWidget {
 
 class _SalesChartDailyDialogState extends ConsumerState<SalesChartDailyDialog> {
   static const _columns = [
-    TkGridColumn(label: '매출 번호'),
     TkGridColumn(label: '구분'),
     TkGridColumn(label: '고객'),
     TkGridColumn(label: '수량', numeric: true),
     TkGridColumn(label: '할인', numeric: true),
     TkGridColumn(label: '지출 종류'),
-    TkGridColumn(label: '금액', numeric: true),
     TkGridColumn(label: '결제 상태'),
-    TkGridColumn(label: '뱅킹', width: 80, align: TextAlign.center),
-    TkGridColumn(label: '매출 일자'),
+    TkGridColumn(label: '금액', numeric: true),
   ];
 
   final _customerApi = CustomerApi();
@@ -170,6 +167,9 @@ class _SalesChartDailyDialogState extends ConsumerState<SalesChartDailyDialog> {
                       return TkGridTable(
                         columns: _columns,
                         groups: _groupsOf(displayItems),
+                        footerLabel: '전체 합계',
+                        footerSummary: '${result.totalAmount.formatted}원',
+                        footerSummaryColumnIndex: 6,
                         itemCount: displayItems.length,
                         itemBuilder: (index) =>
                             _buildRow(codes, displayItems[index]),
@@ -233,39 +233,34 @@ class _SalesChartDailyDialogState extends ConsumerState<SalesChartDailyDialog> {
           label: '뱅킹',
           itemCount: banking.length,
           summary: '${sumCost(banking).formatted}원',
+          summaryColumnIndex: 6,
         ),
       if (notBanking.isNotEmpty)
         TkGridGroup(
           label: '미뱅킹',
           itemCount: notBanking.length,
           summary: '${sumCost(notBanking).formatted}원',
+          summaryColumnIndex: 6,
         ),
       if (expend.isNotEmpty)
         TkGridGroup(
           label: '지출',
           itemCount: expend.length,
           summary: '${sumCost(expend).formatted}원',
+          summaryColumnIndex: 6,
         ),
     ];
   }
 
   List<Widget> _buildRow(List<Code> codes, SalesChartDailyItem item) {
     return [
-      Text(item.salesNo),
       Text(item.salesType),
       Text(_customerName(item.custCode)),
       Text(item.qty.formatted),
       Text(item.discount.formatted),
       Text(_expendTypeLabel(codes, item)),
-      Text(item.cost.formatted),
       Text(_paymentStatusLabel(codes, item.status)),
-      Checkbox(
-        value: item.bankingYn == 'Y',
-        onChanged: null,
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        visualDensity: VisualDensity.compact,
-      ),
-      Text(item.salesDate),
+      Text(item.cost.formatted),
     ];
   }
 }

@@ -44,11 +44,15 @@ class TkGridGroup {
     required this.label,
     required this.itemCount,
     this.summary,
+    this.summaryColumnIndex,
   });
 
   final String label;
   final int itemCount;
   final String? summary;
+
+  /// [summary]를 맞출 컬럼 인덱스. 없으면 오른쪽 정렬.
+  final int? summaryColumnIndex;
 }
 
 class TkGridTable extends StatelessWidget {
@@ -70,6 +74,9 @@ class TkGridTable extends StatelessWidget {
     this.rowNumberWidth = 50,
     this.groups,
     this.groupHeaderHeight = 36,
+    this.footerLabel,
+    this.footerSummary,
+    this.footerSummaryColumnIndex,
   }) : assert(
           rows != null || (itemCount != null && itemBuilder != null),
           'rows 또는 itemCount·itemBuilder가 필요합니다.',
@@ -94,9 +101,13 @@ class TkGridTable extends StatelessWidget {
   /// 레거시 `IndicatorWidth` 기본 50.
   final double rowNumberWidth;
 
-  /// 연속 행 그룹 헤더. 지정 시 [itemBuilder] 순서가 그룹 순서와 같아야 한다.
+  /// 연속 행 그룹. 지정 시 [itemBuilder] 순서가 그룹 순서와 같아야 한다.
+  /// 라벨은 행 위, 합계 금액은 행 아래에 둔다.
   final List<TkGridGroup>? groups;
   final double groupHeaderHeight;
+  final String? footerLabel;
+  final String? footerSummary;
+  final int? footerSummaryColumnIndex;
 
   static const _borderSide = BorderSide(color: AppColors.border, width: 1);
 
@@ -154,6 +165,15 @@ class TkGridTable extends StatelessWidget {
                         height: groupHeaderHeight,
                       );
                     }
+                    if (entry.summaryGroup != null) {
+                      return _GroupSummaryRow(
+                        group: entry.summaryGroup!,
+                        widths: columnWidths,
+                        rowHeight: rowHeight,
+                        showRowNumber: showRowNumber,
+                        rowNumberWidth: rowNumberWidth,
+                      );
+                    }
 
                     final dataIndex = entry.dataIndex!;
                     return _DataRow(
@@ -178,6 +198,16 @@ class TkGridTable extends StatelessWidget {
                 ),
               ),
             ),
+            if (footerSummary != null)
+              _FooterSummaryRow(
+                label: footerLabel ?? '전체 합계',
+                amount: footerSummary!,
+                amountColumnIndex: footerSummaryColumnIndex,
+                widths: columnWidths,
+                rowHeight: rowHeight,
+                showRowNumber: showRowNumber,
+                rowNumberWidth: rowNumberWidth,
+              ),
           ],
         );
       },
@@ -196,6 +226,9 @@ class TkGridTable extends StatelessWidget {
       entries.add(_ListEntry.group(group));
       for (var i = 0; i < group.itemCount; i++) {
         entries.add(_ListEntry.data(offset + i));
+      }
+      if (group.summary != null) {
+        entries.add(_ListEntry.summary(group));
       }
       offset += group.itemCount;
     }
@@ -466,14 +499,158 @@ class _RowNumberCell extends StatelessWidget {
 }
 
 class _ListEntry {
-  const _ListEntry._({this.group, this.dataIndex});
+  const _ListEntry._({this.group, this.summaryGroup, this.dataIndex});
 
   factory _ListEntry.group(TkGridGroup group) => _ListEntry._(group: group);
+
+  factory _ListEntry.summary(TkGridGroup group) =>
+      _ListEntry._(summaryGroup: group);
 
   factory _ListEntry.data(int index) => _ListEntry._(dataIndex: index);
 
   final TkGridGroup? group;
+  final TkGridGroup? summaryGroup;
   final int? dataIndex;
+}
+
+class _FooterSummaryRow extends StatelessWidget {
+  const _FooterSummaryRow({
+    required this.label,
+    required this.amount,
+    required this.widths,
+    required this.rowHeight,
+    required this.showRowNumber,
+    required this.rowNumberWidth,
+    this.amountColumnIndex,
+  });
+
+  final String label;
+  final String amount;
+  final int? amountColumnIndex;
+  final List<double> widths;
+  final double rowHeight;
+  final bool showRowNumber;
+  final double rowNumberWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    final amountIndex = amountColumnIndex;
+    final leadingWidth = (showRowNumber ? rowNumberWidth : 0) +
+        (amountIndex == null
+            ? 0.0
+            : widths.take(amountIndex).fold<double>(0, (sum, w) => sum + w));
+    final amountWidth = amountIndex == null ? 110.0 : widths[amountIndex];
+    const style = TextStyle(
+      fontWeight: FontWeight.w700,
+      color: AppColors.textPrimary,
+      fontSize: 14,
+    );
+
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: AppColors.neutral100,
+        border: Border(
+          top: BorderSide(color: AppColors.border, width: 1),
+          left: TkGridTable._borderSide,
+          right: TkGridTable._borderSide,
+          bottom: TkGridTable._borderSide,
+        ),
+      ),
+      child: SizedBox(
+        height: rowHeight,
+        child: Row(
+          children: [
+            SizedBox(
+              width: leadingWidth,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(label, style: style),
+                ),
+              ),
+            ),
+            SizedBox(
+              width: amountWidth,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(amount, style: style),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GroupSummaryRow extends StatelessWidget {
+  const _GroupSummaryRow({
+    required this.group,
+    required this.widths,
+    required this.rowHeight,
+    required this.showRowNumber,
+    required this.rowNumberWidth,
+  });
+
+  final TkGridGroup group;
+  final List<double> widths;
+  final double rowHeight;
+  final bool showRowNumber;
+  final double rowNumberWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    final amountIndex = group.summaryColumnIndex;
+    const style = TextStyle(
+      fontWeight: FontWeight.w600,
+      color: AppColors.textPrimary,
+      fontSize: 13,
+    );
+    final amountText = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Text(
+        group.summary ?? '',
+        textAlign: TextAlign.right,
+        style: style,
+      ),
+    );
+
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: AppColors.neutral50,
+        border: Border(bottom: TkGridTable._borderSide),
+      ),
+      child: SizedBox(
+        height: rowHeight,
+        child: amountIndex == null
+            ? Align(
+                alignment: Alignment.centerRight,
+                child: amountText,
+              )
+            : Row(
+                children: [
+                  SizedBox(
+                    width: (showRowNumber ? rowNumberWidth : 0) +
+                        widths
+                            .take(amountIndex)
+                            .fold<double>(0, (sum, w) => sum + w),
+                  ),
+                  SizedBox(
+                    width: widths[amountIndex],
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: amountText,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
 }
 
 class _GroupHeaderRow extends StatelessWidget {
@@ -496,28 +673,16 @@ class _GroupHeaderRow extends StatelessWidget {
         height: height,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  group.label,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                    fontSize: 13,
-                  ),
-                ),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              group.label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+                fontSize: 13,
               ),
-              if (group.summary != null)
-                Text(
-                  group.summary!,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                    fontSize: 13,
-                  ),
-                ),
-            ],
+            ),
           ),
         ),
       ),
