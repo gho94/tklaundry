@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class TkTextField extends StatelessWidget {
   const TkTextField({
@@ -15,6 +16,8 @@ class TkTextField extends StatelessWidget {
     this.suffixIcon,
     this.autofocus = false,
     this.focusNode,
+    this.keyboardType,
+    this.inputFormatters,
   });
 
   final TextEditingController? controller;
@@ -29,12 +32,16 @@ class TkTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final bool autofocus;
   final FocusNode? focusNode;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
       focusNode: focusNode,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       obscureText: obscureText,
       readOnly: readOnly,
       autofocus: autofocus,
