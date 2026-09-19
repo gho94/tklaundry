@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../shared/utils/tk_format.dart';
@@ -46,6 +47,7 @@ class DeliveryDetailPanel extends ConsumerStatefulWidget {
 
 class _DeliveryDetailPanelState extends ConsumerState<DeliveryDetailPanel> {
   final Set<int> _selectedOrderSeqs = {};
+  final Map<int, TextEditingController> _discountControllers = {};
   final Map<int, TextEditingController> _remarkControllers = {};
   bool _selectionInitialized = false;
 
@@ -66,9 +68,13 @@ class _DeliveryDetailPanelState extends ConsumerState<DeliveryDetailPanel> {
   }
 
   void _disposeLineControllers() {
+    for (final controller in _discountControllers.values) {
+      controller.dispose();
+    }
     for (final controller in _remarkControllers.values) {
       controller.dispose();
     }
+    _discountControllers.clear();
     _remarkControllers.clear();
   }
 
@@ -78,10 +84,16 @@ class _DeliveryDetailPanelState extends ConsumerState<DeliveryDetailPanel> {
         .where((seq) => !seqs.contains(seq))
         .toList();
     for (final seq in removed) {
+      _discountControllers.remove(seq)?.dispose();
       _remarkControllers.remove(seq)?.dispose();
     }
 
     for (final detail in details) {
+      _discountControllers.putIfAbsent(
+        detail.orderSeq,
+        () => TextEditingController(text: detail.discount.toString())
+          ..addListener(() => _onLineChanged(details)),
+      );
       _remarkControllers.putIfAbsent(
         detail.orderSeq,
         () => TextEditingController(text: detail.remark ?? '')
@@ -92,6 +104,7 @@ class _DeliveryDetailPanelState extends ConsumerState<DeliveryDetailPanel> {
 
   void _onLineChanged(List<OrderDetail> details) {
     if (!mounted) return;
+    setState(() {});
     widget.onEditsChanged?.call(_editsOf(details));
   }
 
@@ -99,14 +112,30 @@ class _DeliveryDetailPanelState extends ConsumerState<DeliveryDetailPanel> {
     return {
       for (final detail in details)
         detail.orderSeq: DeliveryLineEdit(
+          discount: _discountOf(detail.orderSeq),
+          cost: _costOf(detail),
           remark: _remarkOf(detail.orderSeq),
         ),
     };
   }
 
+  int _discountOf(int orderSeq) {
+    return _parseInt(_discountControllers[orderSeq]?.text ?? '');
+  }
+
+  int _costOf(OrderDetail detail) {
+    return detail.price * detail.qty - _discountOf(detail.orderSeq);
+  }
+
   String? _remarkOf(int orderSeq) {
     final value = _remarkControllers[orderSeq]?.text.trim() ?? '';
     return value.isEmpty ? null : value;
+  }
+
+  static int _parseInt(String raw) {
+    final cleaned = raw.replaceAll(',', '').trim();
+    if (cleaned.isEmpty) return 0;
+    return int.tryParse(cleaned) ?? 0;
   }
 
   void _scheduleSelectAll(List<OrderDetail> details) {
@@ -187,8 +216,11 @@ class _DeliveryDetailPanelState extends ConsumerState<DeliveryDetailPanel> {
       Text(widget.productName(detail.productCode)),
       Text(codes.displayName(detail.processCode)),
       Text(detail.price.formatted),
-      Text(detail.discount.formatted),
-      Text(detail.cost.formatted),
+      _GridNumberField(
+        controller: _discountControllers[detail.orderSeq]!,
+        readOnly: !widget.enabled,
+      ),
+      Text(_costOf(detail).formatted),
       Text(detail.qty.formatted),
       _GridTextField(
         controller: _remarkControllers[detail.orderSeq]!,
@@ -233,6 +265,35 @@ class _DeliveryDetailPanelState extends ConsumerState<DeliveryDetailPanel> {
       }
     });
     widget.onSelectionChanged?.call(Set.unmodifiable(_selectedOrderSeqs));
+  }
+}
+
+class _GridNumberField extends StatelessWidget {
+  const _GridNumberField({
+    required this.controller,
+    required this.readOnly,
+  });
+
+  final TextEditingController controller;
+  final bool readOnly;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      readOnly: readOnly,
+      textAlign: TextAlign.right,
+      style: Theme.of(context).textTheme.bodyMedium,
+      keyboardType: TextInputType.number,
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'-?[0-9]*')),
+      ],
+      decoration: const InputDecoration(
+        isDense: true,
+        border: InputBorder.none,
+        contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      ),
+    );
   }
 }
 

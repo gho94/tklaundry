@@ -64,7 +64,7 @@ class _CustomerRegisterDialogState
     if (customer == null) return;
 
     _custNameController.text = customer.custName;
-    _custPhoneController.text = customer.custPhone;
+    _custPhoneController.text = _formatPhone(customer.custPhone);
     _aptCode = _comboValue(customer.aptCode);
     _buildingCode = _comboValue(customer.buildingCode);
     _floorCode = _comboValue(customer.floorCode);
@@ -72,6 +72,36 @@ class _CustomerRegisterDialogState
   }
 
   String? _comboValue(String code) => code.isEmpty ? null : code.trim();
+
+  String _formatPhone(String raw) {
+    final d = raw.replaceAll(RegExp(r'[^0-9]'), '');
+    if (d.startsWith('02')) {
+      final n = d.length > 10 ? d.substring(0, 10) : d;
+      if (n.length <= 2) return n;
+      if (n.length <= 5) return '${n.substring(0, 2)}-${n.substring(2)}';
+      if (n.length <= 9) {
+        return '${n.substring(0, 2)}-${n.substring(2, 5)}-${n.substring(5)}';
+      }
+      return '${n.substring(0, 2)}-${n.substring(2, 6)}-${n.substring(6)}';
+    }
+
+    final n = d.length > 11 ? d.substring(0, 11) : d;
+    if (n.length <= 3) return n;
+    if (n.length <= 6) return '${n.substring(0, 3)}-${n.substring(3)}';
+    if (n.length <= 10) {
+      return '${n.substring(0, 3)}-${n.substring(3, 6)}-${n.substring(6)}';
+    }
+    return '${n.substring(0, 3)}-${n.substring(3, 7)}-${n.substring(7)}';
+  }
+
+  void _onPhoneChanged(String value) {
+    final formatted = _formatPhone(value);
+    if (formatted == value) return;
+    _custPhoneController.value = TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
 
   @override
   void dispose() {
@@ -351,7 +381,9 @@ class _CustomerRegisterDialogState
           TkTextField(
             controller: _custPhoneController,
             label: '전화번호',
-            hint: '전화번호',
+            hint: '000-0000-0000',
+            keyboardType: TextInputType.phone,
+            onChanged: _onPhoneChanged,
           ),
           if (_errorMessage != null) ...[
             const SizedBox(height: 12),

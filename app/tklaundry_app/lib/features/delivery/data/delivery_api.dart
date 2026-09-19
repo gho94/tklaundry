@@ -6,8 +6,14 @@ import '../../order/domain/order_detail.dart';
 import '../../order/domain/order_list_result.dart';
 
 class DeliveryLineEdit {
-  const DeliveryLineEdit({this.remark});
+  const DeliveryLineEdit({
+    required this.discount,
+    required this.cost,
+    this.remark,
+  });
 
+  final int discount;
+  final int cost;
   final String? remark;
 }
 
@@ -42,8 +48,8 @@ class DeliveryDetailInput {
       processCode: detail.processCode,
       price: detail.price,
       qty: detail.qty,
-      discount: detail.discount,
-      cost: detail.cost,
+      discount: edit?.discount ?? detail.discount,
+      cost: edit?.cost ?? detail.cost,
       remark: edit != null ? edit.remark : detail.remark,
     );
   }
